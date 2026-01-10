@@ -19,6 +19,7 @@ class TaskController extends Controller
             'description' => ['sometimes', 'nullable', 'string'],
             'priority' => ['sometimes', 'string'],
             'has_subtasks' => ['sometimes', 'boolean'],
+            'due_date' => ['sometimes', 'nullable', 'date'],
             'status' => ['sometimes', 'string'],
             'is_completed' => ['sometimes', 'boolean'],
         ]);

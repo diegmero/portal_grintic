@@ -16,8 +16,13 @@ class Stage extends Model implements HasMedia
 {
     use HasFactory, HasUuids, LogsActivity, InteractsWithMedia;
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('stage_files')
+            ->useDisk('local');
+    }
+
     protected $fillable = [
-        'project_id',
         'name',
         'order',
         'status',

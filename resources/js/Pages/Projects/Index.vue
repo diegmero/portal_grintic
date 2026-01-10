@@ -36,6 +36,21 @@ const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+// Filters
+import { computed } from 'vue';
+const filters = ref({
+    status: '',
+    company_id: ''
+});
+
+const filteredProjects = computed(() => {
+    return props.projects.filter(project => {
+        const matchesStatus = filters.value.status ? project.status === filters.value.status : true;
+        const matchesCompany = filters.value.company_id ? project.company_id === filters.value.company_id : true;
+        return matchesStatus && matchesCompany;
+    });
+});
 </script>
 
 <template>
@@ -51,26 +66,89 @@ const formatDate = (dateString) => {
             </div>
         </template>
 
-        <div class="py-6">
-            <div class="mx-auto max-w-7xl">
+        <div class="py-0">
+            <div class="mx-auto max-w-8xl px-4 sm:px-6 lg:px-8">
                 
-                <!-- Table -->
-                <div v-if="projects.length > 0" class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Proyecto</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cliente</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Progreso</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fechas</th>
-                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                    <span class="sr-only">Acciones</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white">
-                            <tr v-for="project in projects" :key="project.id" class="hover:bg-gray-50 transition-colors">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <!-- Left Column: Statistics & Filters -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <!-- Filters -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-900/5 space-y-4">
+                            <h3 class="font-semibold text-gray-900">Filtros</h3>
+                            
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Cliente</label>
+                                <select v-model="filters.company_id" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-xs sm:leading-6">
+                                    <option value="">Todos</option>
+                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Estado</label>
+                                <select v-model="filters.status" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-xs sm:leading-6">
+                                    <option value="">Todos</option>
+                                    <option value="active">Activos</option>
+                                    <option value="on_hold">En Pausa</option>
+                                    <option value="completed">Completados</option>
+                                    <option value="cancelled">Cancelados</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Create Button (Mobile-friendly location or stick to top) -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-900/5">
+                            <h3 class="font-semibold text-gray-900 mb-2">Acciones</h3>
+                            <button 
+                                @click="showCreateSlideOver = true"
+                                class="w-full justify-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand flex items-center gap-2"
+                            >
+                                <PlusIcon class="h-5 w-5" />
+                                Nuevo Proyecto
+                            </button>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-900/5 space-y-4">
+                            <h3 class="font-semibold text-gray-900">Resumen</h3>
+                            
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                <span class="text-sm text-gray-500">Total</span>
+                                <span class="text-lg font-bold text-gray-900">{{ projects.length }}</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                                <span class="text-sm text-green-700">Activos</span>
+                                <span class="text-lg font-bold text-green-700">{{ projects.filter(p => p.status === 'active').length }}</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                <span class="text-sm text-blue-700">Completados</span>
+                                <span class="text-lg font-bold text-blue-700">{{ projects.filter(p => p.status === 'completed').length }}</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <span class="text-sm text-yellow-700">En Pausa</span>
+                                <span class="text-lg font-bold text-yellow-700">{{ projects.filter(p => p.status === 'on_hold').length }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Projects Table -->
+                    <div class="lg:col-span-4">
+                        <div v-if="projects.length > 0" class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Proyecto</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cliente</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Progreso</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fechas</th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                            <span class="">Acciones</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    <tr v-for="project in filteredProjects" :key="project.id" class="hover:bg-gray-50 transition-colors">
                                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                                     <div class="flex items-center gap-3">
                                         <div class="h-10 w-10 flex-shrink-0 rounded-lg bg-brand/10 flex items-center justify-center">
@@ -132,6 +210,8 @@ const formatDate = (dateString) => {
                     </div>
                 </div>
 
+                    </div>
+                </div>
             </div>
         </div>
 

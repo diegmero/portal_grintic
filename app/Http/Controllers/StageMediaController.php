@@ -20,10 +20,10 @@ class StageMediaController extends Controller
         }
 
         $request->validate([
-            'file' => ['required', 'file', 'mimes:pdf', 'max:10240'], // PDF only, 10MB max
+            'file' => ['required', 'file', 'mimes:pdf', 'max:5120'], // PDF only, 5MB max
         ], [
             'file.mimes' => 'Solo se permiten archivos PDF.',
-            'file.max' => 'El archivo no puede superar 10MB.',
+            'file.max' => 'El archivo no puede superar 5MB.',
         ]);
 
         $stage->addMediaFromRequest('file')
@@ -38,5 +38,18 @@ class StageMediaController extends Controller
         $media->delete();
 
         return redirect()->back()->with('success', 'Archivo eliminado.');
+    }
+
+    public function show(Stage $stage, string $mediaId)
+    {
+        $media = $stage->media()->findOrFail($mediaId);
+
+        // Ensure user has access to the project
+        // $this->authorize('view', $stage->project); // Policy check if needed
+
+        return response()->file($media->getPath(), [
+            'Content-Type' => $media->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $media->file_name . '"',
+        ]);
     }
 }

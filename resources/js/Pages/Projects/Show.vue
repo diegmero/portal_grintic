@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { 
     CheckCircleIcon as CheckCircleIconOutline, 
     PlusIcon, 
@@ -17,6 +17,10 @@ import {
 } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/vue/24/solid';
 import CommentsSection from '@/Components/Comments/CommentsSection.vue';
+import TaskDetailSlideOver from '@/Components/Projects/TaskDetailSlideOver.vue';
+import ProjectEditSlideOver from '@/Components/Projects/ProjectEditSlideOver.vue';
+
+const showEditProject = ref(false);
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -99,15 +103,49 @@ const deleteStage = (stageId) => {
 };
 
 // File Upload for Stage
+// File Upload for Stage
 const uploadFileToStage = (stageId, event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    // Client-side validation
+    if (file.type !== 'application/pdf') {
+        alert('Solo se permiten archivos PDF.');
+        event.target.value = '';
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+        alert('El archivo no puede superar los 5MB.');
+        event.target.value = '';
+        return;
+    }
     
     router.post(route('stages.media.store', stageId), { file }, {
         forceFormData: true,
         preserveScroll: true,
+        onError: (errors) => {
+            if (errors.file) alert(errors.file);
+        }
     });
     event.target.value = '';
+};
+
+// File Preview
+const showFilePreviewModal = ref(false);
+const previewFileUrl = ref('');
+const previewFileName = ref('');
+
+const openFilePreview = (url, fileName) => {
+    previewFileUrl.value = url;
+    previewFileName.value = fileName;
+    showFilePreviewModal.value = true;
+};
+
+const closeFilePreview = () => {
+    showFilePreviewModal.value = false;
+    previewFileUrl.value = '';
+    previewFileName.value = '';
 };
 
 const deleteStageFile = (stageId, mediaId) => {
@@ -117,11 +155,45 @@ const deleteStageFile = (stageId, mediaId) => {
 };
 
 // --- Task Management ---
-const showAddTaskModal = ref(false);
-const showEditTaskModal = ref(false);
 const activeStageIdForTask = ref(null);
-const editingTask = ref(null);
-const taskForm = useForm({ name: '', description: '', priority: 'medium', has_subtasks: true });
+
+// Slide-over for task details (edit and create modes)
+const showTaskSlideOver = ref(false);
+const selectedTask = ref(null);
+
+// Open slide-over in create mode
+const openCreateTaskSlideOver = (stageId) => {
+    selectedTask.value = null;
+    activeStageIdForTask.value = stageId;
+    showTaskSlideOver.value = true;
+};
+
+// Open slide-over in edit mode
+const openTaskSlideOver = (task) => {
+    selectedTask.value = task;
+    activeStageIdForTask.value = null;
+    showTaskSlideOver.value = true;
+};
+
+// Sync selectedTask when props change (real-time updates)
+watch(() => props.project, (newProject) => {
+    if (selectedTask.value && showTaskSlideOver.value) {
+        // Find the updated task in the new project data
+        for (const stage of newProject.stages) {
+            const foundTask = stage.tasks.find(t => t.id === selectedTask.value.id);
+            if (foundTask) {
+                selectedTask.value = foundTask;
+                break;
+            }
+        }
+    }
+}, { deep: true });
+
+const closeTaskSlideOver = () => {
+    showTaskSlideOver.value = false;
+    selectedTask.value = null;
+    activeStageIdForTask.value = null;
+};
 
 // Priority config
 const priorityConfig = {
@@ -131,57 +203,21 @@ const priorityConfig = {
     'urgent': { label: 'Urgente', class: 'bg-red-100 text-red-700' },
 };
 
-const openAddTaskModal = (stageId) => {
-    activeStageIdForTask.value = stageId;
-    taskForm.reset();
-    taskForm.priority = 'medium';
-    taskForm.has_subtasks = true;
-    showAddTaskModal.value = true;
-};
-
-const addTask = () => {
-    taskForm.post(route('tasks.store', activeStageIdForTask.value), {
-        onSuccess: () => { taskForm.reset(); showAddTaskModal.value = false; },
-        preserveScroll: true,
-    });
-};
-
-const openEditTaskModal = (task) => {
-    editingTask.value = task;
-    taskForm.name = task.name;
-    taskForm.description = task.description || '';
-    taskForm.priority = task.priority || 'medium';
-    taskForm.has_subtasks = task.has_subtasks !== false;
-    showEditTaskModal.value = true;
-};
-
-const updateTask = () => {
-    taskForm.patch(route('tasks.update', editingTask.value.id), {
-        onSuccess: () => { taskForm.reset(); showEditTaskModal.value = false; editingTask.value = null; },
-        preserveScroll: true,
-    });
-};
-
-const toggleTask = (task) => {
+const toggleTask = (task, event) => {
+    event.stopPropagation();
     router.patch(route('tasks.update', task.id), {
         is_completed: task.status !== 'completed',
     }, { preserveScroll: true });
 };
 
-const deleteTask = (taskId) => {
-    if (confirm('¿Eliminar esta tarea?')) {
-        router.delete(route('tasks.destroy', taskId), { preserveScroll: true });
-    }
-};
-
-// --- Subtask Management ---
-const expandedTasks = ref({});
-const newSubtaskName = ref({});
-const editingSubtask = ref(null);
-const editSubtaskName = ref('');
-
-const toggleTaskExpansion = (taskId) => {
-    expandedTasks.value[taskId] = !expandedTasks.value[taskId];
+// Date formatting
+const formatShortDate = (dateString) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: 'short',
+        timeZone: 'UTC'
+    });
 };
 
 const addSubtask = (taskId) => {
@@ -223,10 +259,13 @@ const deleteSubtask = (subtaskId) => {
                 <Link :href="route('projects.index')" class="text-gray-400 hover:text-gray-600">Proyectos</Link>
                 <span class="text-gray-300">/</span>
                 <span class="font-medium text-gray-900">{{ project.name }}</span>
+                <button @click="showEditProject = true" class="text-gray-400 hover:text-brand transition-colors p-1 rounded-full hover:bg-gray-100" title="Editar Proyecto">
+                    <PencilSquareIcon class="h-4 w-4" />
+                </button>
             </div>
         </template>
 
-        <div class="py-4">
+        <div class="py-0">
             <div class="mx-auto max-w-7xl">
                 <div class="flex gap-6">
                     
@@ -270,6 +309,26 @@ const deleteSubtask = (subtaskId) => {
                                     <span class="text-gray-500">Tareas</span>
                                     <span class="text-gray-900">{{ completedTasks }}/{{ totalTasks }}</span>
                                 </div>
+                            </div>
+
+                            <!-- Project Files (Secure) -->
+                            <div class="p-3 border-t border-gray-100">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-semibold text-gray-900">Archivos del Proyecto</h4>
+                                    <button @click="showEditProject = true" class="text-xs text-brand hover:underline">Gestionar</button>
+                                </div>
+                                <div v-if="project.media && project.media.length > 0" class="space-y-1">
+                                    <button 
+                                        v-for="file in project.media" 
+                                        :key="file.id"
+                                        @click="openFilePreview(route('projects.media.show', { project: project.id, media: file.id }), file.file_name)"
+                                        class="flex items-center gap-2 text-xs text-gray-600 hover:text-brand w-full text-left truncate group px-1 py-0.5 rounded hover:bg-gray-50"
+                                    >
+                                        <PaperClipIcon class="h-3 w-3 flex-shrink-0 text-gray-400 group-hover:text-brand" />
+                                        <span class="truncate">{{ file.file_name }}</span>
+                                    </button>
+                                </div>
+                                <p v-else class="text-xs text-gray-400 italic px-1">Sin archivos adjuntos.</p>
                             </div>
 
                             <!-- Description -->
@@ -320,7 +379,7 @@ const deleteSubtask = (subtaskId) => {
                                             </div>
                                             <!-- Actions -->
                                             <div class="flex items-center gap-1">
-                                                <button @click="openAddTaskModal(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
+                                                <button @click="openCreateTaskSlideOver(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
                                                     <PlusIcon class="h-4 w-4" />
                                                 </button>
                                                 <label class="p-1.5 text-gray-400 hover:text-brand rounded cursor-pointer" title="Subir Archivo">
@@ -341,9 +400,11 @@ const deleteSubtask = (subtaskId) => {
                                 <!-- Stage Files -->
                                 <div v-if="stage.media?.length" class="px-4 py-2 bg-blue-50/50 border-b border-gray-100">
                                     <div class="flex flex-wrap gap-2">
-                                        <div v-for="file in stage.media" :key="file.id" class="inline-flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200 text-xs group">
-                                            <PaperClipIcon class="h-3 w-3 text-gray-400" />
-                                            <a :href="file.original_url" target="_blank" class="text-brand hover:underline max-w-[150px] truncate">{{ file.file_name }}</a>
+                                            <div v-for="file in stage.media" :key="file.id" class="inline-flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200 text-xs group">
+                                                <PaperClipIcon class="h-3 w-3 text-gray-400" />
+                                                <button @click="openFilePreview(route('stages.media.show', { stage: stage.id, media: file.id }), file.file_name)" class="text-brand hover:underline max-w-[150px] truncate text-left">
+                                                    {{ file.file_name }}
+                                                </button>
                                             <button @click="deleteStageFile(stage.id, file.id)" class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
                                                 <XMarkIcon class="h-3 w-3" />
                                             </button>
@@ -353,124 +414,48 @@ const deleteSubtask = (subtaskId) => {
 
                                 <!-- Tasks List -->
                                 <div class="divide-y divide-gray-50">
-                                    <div v-for="task in stage.tasks" :key="task.id">
-                                        <!-- Task Row -->
-                                        <div class="px-4 py-2 hover:bg-gray-50/50 flex items-center gap-3 group">
-                                            <button @click="toggleTask(task)" class="flex-shrink-0">
-                                                <CheckCircleIconSolid v-if="task.status === 'completed'" class="h-5 w-5 text-green-500" />
-                                                <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300 hover:text-green-400" />
-                                            </button>
-                                            <button @click="toggleTaskExpansion(task.id)" class="text-gray-400 hover:text-gray-600">
-                                                <ChevronDownIcon v-if="expandedTasks[task.id]" class="h-3.5 w-3.5" />
-                                                <ChevronRightIcon v-else class="h-3.5 w-3.5" />
-                                            </button>
-                                            <div class="flex-1 min-w-0">
-                                                <span :class="['text-sm', task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900']">{{ task.name }}</span>
-                                                <span v-if="task.subtasks?.length" class="ml-2 text-[10px] text-gray-400">
-                                                    ({{ task.subtasks.filter(s => s.is_completed).length }}/{{ task.subtasks.length }} subtareas)
-                                                </span>
-                                            </div>
-                                            <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-[10px] font-medium px-1.5 py-0.5 rounded']">
-                                                {{ priorityConfig[task.priority]?.label || task.priority }}
+                                    <div 
+                                        v-for="task in stage.tasks" 
+                                        :key="task.id" 
+                                        @click="openTaskSlideOver(task)"
+                                        class="px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 cursor-pointer group transition-colors"
+                                    >
+                                        <!-- Checkbox -->
+                                        <button @click="toggleTask(task, $event)" class="flex-shrink-0 transition-transform hover:scale-110">
+                                            <CheckCircleIconSolid v-if="task.status === 'completed'" class="h-5 w-5 text-green-500" />
+                                            <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300 hover:text-green-400" />
+                                        </button>
+                                        
+                                        <!-- Task Name & Subtask Badge -->
+                                        <div class="flex-1 min-w-0">
+                                            <span :class="['text-sm font-medium', task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900']">
+                                                {{ task.name }}
                                             </span>
-                                            <button @click="openEditTaskModal(task)" class="p-1 text-gray-300 hover:text-brand opacity-0 group-hover:opacity-100">
-                                                <PencilSquareIcon class="h-3.5 w-3.5" />
-                                            </button>
-                                            <button @click="deleteTask(task.id)" class="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
-                                                <TrashIcon class="h-3.5 w-3.5" />
-                                            </button>
+                                            <span v-if="task.has_subtasks && task.subtasks?.length" class="ml-2 text-[10px] text-gray-400">
+                                                <span class="inline-flex items-center gap-0.5">
+                                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                    </svg>
+                                                    {{ task.subtasks.filter(s => s.is_completed).length }}/{{ task.subtasks.length }}
+                                                </span>
+                                            </span>
                                         </div>
 
-                                        <!-- Expanded Task Details -->
-                                        <div v-if="expandedTasks[task.id]" class="border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white">
-                                            <div class="p-4 space-y-4">
-                                                
-                                                <!-- Description Section -->
-                                                <div v-if="task.description" class="bg-white rounded-lg border border-gray-100 p-3">
-                                                    <div class="flex items-center gap-2 mb-2">
-                                                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h12" />
-                                                        </svg>
-                                                        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Descripción</span>
-                                                    </div>
-                                                    <p class="text-sm text-gray-700 leading-relaxed pl-6">{{ task.description }}</p>
-                                                </div>
-                                                
-                                                <!-- Subtasks Section (only if has_subtasks is enabled) -->
-                                                <div v-if="task.has_subtasks" class="bg-white rounded-lg border border-gray-100 p-3">
-                                                    <div class="flex items-center justify-between mb-3">
-                                                        <div class="flex items-center gap-2">
-                                                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                            </svg>
-                                                            <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Subtareas</span>
-                                                        </div>
-                                                        <span v-if="task.subtasks?.length" class="text-xs text-gray-400">
-                                                            {{ task.subtasks.filter(s => s.is_completed).length }} de {{ task.subtasks.length }}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <!-- Subtask Progress Bar -->
-                                                    <div v-if="task.subtasks?.length" class="mb-3 px-1">
-                                                        <div class="w-full bg-gray-100 rounded-full h-1">
-                                                            <div class="bg-brand h-1 rounded-full transition-all" 
-                                                                :style="{ width: (task.subtasks.filter(s => s.is_completed).length / task.subtasks.length * 100) + '%' }"></div>
-                                                        </div>
-                                                    </div>
+                                        <!-- Due Date -->
+                                        <span v-if="task.due_date" :class="[
+                                            'text-xs px-1.5 py-0.5 rounded',
+                                            new Date(task.due_date) < new Date() ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
+                                        ]">
+                                            {{ formatShortDate(task.due_date) }}
+                                        </span>
 
-                                                    <!-- Subtask List -->
-                                                    <div class="space-y-1.5 pl-1">
-                                                        <div v-for="subtask in task.subtasks" :key="subtask.id" 
-                                                            class="flex items-center gap-2.5 py-1.5 px-2 rounded-md hover:bg-gray-50 group/sub transition-colors">
-                                                            <button @click="toggleSubtask(subtask)" class="flex-shrink-0">
-                                                                <CheckCircleIconSolid v-if="subtask.is_completed" class="h-4 w-4 text-green-500" />
-                                                                <CheckCircleIconOutline v-else class="h-4 w-4 text-gray-300 hover:text-green-400" />
-                                                            </button>
-                                                            <template v-if="editingSubtask === subtask.id">
-                                                                <input v-model="editSubtaskName" @keyup.enter="saveSubtaskEdit(subtask.id)" @blur="saveSubtaskEdit(subtask.id)" 
-                                                                    class="text-sm border border-brand rounded px-2 py-0.5 flex-1 focus:ring-1 focus:ring-brand" autofocus />
-                                                            </template>
-                                                            <template v-else>
-                                                                <span :class="['text-sm flex-1', subtask.is_completed ? 'text-gray-400 line-through' : 'text-gray-700']">{{ subtask.name }}</span>
-                                                                <div class="flex items-center gap-1 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                                                                    <button @click="startEditSubtask(subtask)" class="p-1 text-gray-400 hover:text-brand rounded">
-                                                                        <PencilSquareIcon class="h-3 w-3" />
-                                                                    </button>
-                                                                    <button @click="deleteSubtask(subtask.id)" class="p-1 text-gray-400 hover:text-red-500 rounded">
-                                                                        <XMarkIcon class="h-3 w-3" />
-                                                                    </button>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                        
-                                                        <!-- Add Subtask Input -->
-                                                        <div class="flex items-center gap-2.5 py-1.5 px-2">
-                                                            <PlusIcon class="h-4 w-4 text-gray-300 flex-shrink-0" />
-                                                            <input v-model="newSubtaskName[task.id]" @keyup.enter="addSubtask(task.id)" type="text" 
-                                                                placeholder="Agregar subtarea..." 
-                                                                class="text-sm border-0 bg-transparent py-0.5 px-0 placeholder-gray-400 focus:ring-0 flex-1" />
-                                                        </div>
-                                                    </div>
+                                        <!-- Priority Badge -->
+                                        <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-[10px] font-medium px-1.5 py-0.5 rounded']">
+                                            {{ priorityConfig[task.priority]?.label || task.priority }}
+                                        </span>
 
-                                                    <div v-if="!task.subtasks?.length" class="text-center py-3 text-xs text-gray-400">
-                                                        Sin subtareas aún
-                                                    </div>
-                                                </div>
-
-                                                <!-- Comments Section -->
-                                                <div class="bg-white rounded-lg border border-gray-100 p-3">
-                                                    <div class="flex items-center gap-2 mb-3">
-                                                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                        </svg>
-                                                        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Comentarios</span>
-                                                        <span v-if="task.comments?.length" class="text-xs text-gray-400">({{ task.comments.length }})</span>
-                                                    </div>
-                                                    <CommentsSection :commentable-id="task.id" commentable-type="App\Models\Task" :initial-comments="task.comments" />
-                                                </div>
-
-                                            </div>
-                                        </div>
+                                        <!-- Arrow indicator -->
+                                        <ChevronRightIcon class="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
 
                                     <div v-if="stage.tasks.length === 0" class="px-4 py-4 text-center text-xs text-gray-400">
@@ -517,63 +502,42 @@ const deleteSubtask = (subtaskId) => {
             </div>
         </Modal>
 
-        <!-- Add Task Modal -->
-        <Modal :show="showAddTaskModal" @close="showAddTaskModal = false">
-            <div class="p-5">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Nueva Tarea</h3>
-                <form @submit.prevent="addTask" class="space-y-3">
-                    <TextInput v-model="taskForm.name" type="text" class="w-full" placeholder="Nombre de la tarea" required autofocus />
-                    <textarea v-model="taskForm.description" rows="2" class="w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md text-sm" placeholder="Descripción (opcional)"></textarea>
-                    <div>
-                        <label class="text-xs text-gray-500">Prioridad</label>
-                        <select v-model="taskForm.priority" class="w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md text-sm mt-1">
-                            <option value="low">Baja</option>
-                            <option value="medium">Media</option>
-                            <option value="high">Alta</option>
-                            <option value="urgent">Urgente</option>
-                        </select>
+        <!-- File Preview Modal -->
+        <Modal :show="showFilePreviewModal" @close="closeFilePreview" maxWidth="4xl">
+            <div class="p-4 h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">{{ previewFileName }}</h3>
+                    <button @click="closeFilePreview" class="text-gray-400 hover:text-gray-500">
+                        <XMarkIcon class="h-6 w-6" />
+                    </button>
+                </div>
+                <div class="flex-1 bg-gray-100 rounded-lg overflow-hidden relative">
+                    <iframe 
+                        v-if="previewFileUrl" 
+                        :src="previewFileUrl" 
+                        class="w-full h-full border-0"
+                    ></iframe>
+                    <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        Cargando...
                     </div>
-                    <div class="flex items-center gap-2 py-1">
-                        <input type="checkbox" v-model="taskForm.has_subtasks" id="has_subtasks_new" 
-                            class="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded" />
-                        <label for="has_subtasks_new" class="text-sm text-gray-700">Esta tarea tendrá subtareas</label>
-                    </div>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <SecondaryButton @click="showAddTaskModal = false" type="button">Cancelar</SecondaryButton>
-                        <PrimaryButton type="submit" :disabled="taskForm.processing">Crear</PrimaryButton>
-                    </div>
-                </form>
+                </div>
             </div>
         </Modal>
 
-        <!-- Edit Task Modal -->
-        <Modal :show="showEditTaskModal" @close="showEditTaskModal = false">
-            <div class="p-5">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Tarea</h3>
-                <form @submit.prevent="updateTask" class="space-y-3">
-                    <TextInput v-model="taskForm.name" type="text" class="w-full" placeholder="Nombre de la tarea" required autofocus />
-                    <textarea v-model="taskForm.description" rows="2" class="w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md text-sm" placeholder="Descripción (opcional)"></textarea>
-                    <div>
-                        <label class="text-xs text-gray-500">Prioridad</label>
-                        <select v-model="taskForm.priority" class="w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md text-sm mt-1">
-                            <option value="low">Baja</option>
-                            <option value="medium">Media</option>
-                            <option value="high">Alta</option>
-                            <option value="urgent">Urgente</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-2 py-1">
-                        <input type="checkbox" v-model="taskForm.has_subtasks" id="has_subtasks_edit" 
-                            class="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded" />
-                        <label for="has_subtasks_edit" class="text-sm text-gray-700">Esta tarea tendrá subtareas</label>
-                    </div>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <SecondaryButton @click="showEditTaskModal = false" type="button">Cancelar</SecondaryButton>
-                        <PrimaryButton type="submit" :disabled="taskForm.processing">Guardar</PrimaryButton>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+        <!-- Task Detail Slide-Over (Asana/ClickUp style - for create and edit) -->
+        <TaskDetailSlideOver 
+            :show="showTaskSlideOver" 
+            :task="selectedTask" 
+            :stage-id="activeStageIdForTask"
+            @close="closeTaskSlideOver" 
+        />
+
+        <ProjectEditSlideOver 
+            :show="showEditProject" 
+            :project="project" 
+            @close="showEditProject = false"
+            @preview-file="(file) => openFilePreview(route('projects.media.show', { project: project.id, media: file.id }), file.file_name)"
+        />
 
     </AuthenticatedLayout>
 </template>

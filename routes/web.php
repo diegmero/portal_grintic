@@ -30,12 +30,18 @@ Route::middleware('auth')->group(function () {
     Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show']);
     Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
     Route::get('/my-projects/{project}', [\App\Http\Controllers\ProjectController::class, 'clientView'])->name('projects.client-view');
+    
+    // Project Media
+    Route::post('/projects/{project}/media', [\App\Http\Controllers\ProjectMediaController::class, 'store'])->name('projects.media.store');
+    Route::get('/projects/{project}/media/{media}', [\App\Http\Controllers\ProjectMediaController::class, 'show'])->name('projects.media.show');
+    Route::delete('/projects/{project}/media/{media}', [\App\Http\Controllers\ProjectMediaController::class, 'destroy'])->name('projects.media.destroy');
 
     // Stage Routes
     Route::post('/projects/{project}/stages', [\App\Http\Controllers\StageController::class, 'store'])->name('stages.store');
     Route::put('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'update'])->name('stages.update');
     Route::delete('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'destroy'])->name('stages.destroy');
     Route::post('/stages/{stage}/media', [\App\Http\Controllers\StageMediaController::class, 'store'])->name('stages.media.store');
+    Route::get('/stages/{stage}/media/{media}', [\App\Http\Controllers\StageMediaController::class, 'show'])->name('stages.media.show');
     Route::delete('/stages/{stage}/media/{media}', [\App\Http\Controllers\StageMediaController::class, 'destroy'])->name('stages.media.destroy');
 
     // Task Routes

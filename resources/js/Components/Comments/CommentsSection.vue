@@ -63,8 +63,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="mt-4">
-        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Comentarios</h4>
+    <div>
         
         <div class="space-y-4 max-h-60 overflow-y-auto mb-4 bg-gray-50 p-3 rounded-lg">
             <div v-for="comment in comments" :key="comment.id" class="flex gap-3">
@@ -89,8 +88,7 @@ onMounted(() => {
                 v-model="form.body"
                 type="text" 
                 class="block w-full rounded-md border-0 py-2 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" 
-                placeholder="Escribe un comentario..." 
-                required
+                placeholder="Escribe un comentario..."
             />
             <button type="submit" :disabled="form.processing" class="absolute inset-y-0 right-0 flex items-center pr-3 text-brand hover:text-blue-700">
                 <PaperAirplaneIcon class="h-5 w-5" aria-hidden="true" />
