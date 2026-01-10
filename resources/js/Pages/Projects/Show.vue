@@ -369,8 +369,8 @@ const deleteSubtask = (subtaskId) => {
                                         <div class="flex items-center gap-3">
                                             <span :class="[statusConfig[stage.status]?.class || 'bg-gray-400', 'w-2 h-5 rounded-full']"></span>
                                             <div>
-                                                <h3 class="font-semibold text-gray-900 text-sm">{{ stage.name }}</h3>
-                                                <span class="text-[10px] text-gray-400">{{ stage.tasks.filter(t => t.status === 'completed').length }}/{{ stage.tasks.length }} tareas</span>
+                                                <h3 class="font-semibold text-gray-900 text-base">{{ stage.name }}</h3>
+                                                <span class="text-sm text-gray-700">{{ stage.tasks.filter(t => t.status === 'completed').length }}/{{ stage.tasks.length }} tareas</span>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-3">
