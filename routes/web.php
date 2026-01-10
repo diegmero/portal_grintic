@@ -27,9 +27,29 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('clients', \App\Http\Controllers\ClientController::class)->only(['index', 'store', 'edit', 'update']);
     Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
-    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'show']);
+    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show']);
+    Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
+    Route::get('/my-projects/{project}', [\App\Http\Controllers\ProjectController::class, 'clientView'])->name('projects.client-view');
+
+    // Stage Routes
+    Route::post('/projects/{project}/stages', [\App\Http\Controllers\StageController::class, 'store'])->name('stages.store');
+    Route::put('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'update'])->name('stages.update');
+    Route::delete('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'destroy'])->name('stages.destroy');
+    Route::post('/stages/{stage}/media', [\App\Http\Controllers\StageMediaController::class, 'store'])->name('stages.media.store');
+    Route::delete('/stages/{stage}/media/{media}', [\App\Http\Controllers\StageMediaController::class, 'destroy'])->name('stages.media.destroy');
+
+    // Task Routes
+    Route::post('/stages/{stage}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('tasks.store');
     Route::patch('/tasks/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('/tasks/{task}/media', [\App\Http\Controllers\TaskMediaController::class, 'store'])->name('tasks.media.store');
+
+    // Subtask Routes
+    Route::post('/tasks/{task}/subtasks', [\App\Http\Controllers\SubtaskController::class, 'store'])->name('subtasks.store');
+    Route::patch('/subtasks/{subtask}', [\App\Http\Controllers\SubtaskController::class, 'update'])->name('subtasks.update');
+    Route::delete('/subtasks/{subtask}', [\App\Http\Controllers\SubtaskController::class, 'destroy'])->name('subtasks.destroy');
+
+    // Comments
     Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
 
     Route::get('/finance', [\App\Http\Controllers\FinanceController::class, 'index'])->name('finance.index');

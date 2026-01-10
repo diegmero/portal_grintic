@@ -1,10 +1,16 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CreateClientSlideOver from '@/Components/Clients/CreateClientSlideOver.vue';
-import { BuildingOfficeIcon, PlusIcon, UserIcon, MapPinIcon } from '@heroicons/vue/24/outline';
+import { 
+    PlusIcon, 
+    MapPinIcon, 
+    BriefcaseIcon, 
+    ArrowRightIcon,
+    BuildingOffice2Icon
+} from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     clients: Array,
@@ -12,6 +18,21 @@ const props = defineProps({
 
 const showCreateSlideOver = ref(false);
 
+const checkUrlParams = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('create')) {
+        showCreateSlideOver.value = true;
+    }
+};
+
+onMounted(() => {
+    checkUrlParams();
+});
+
+// Helper for avatars
+const getAvatarUrl = (name) => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0082c9&color=fff&bold=true`;
+};
 </script>
 
 <template>
@@ -20,65 +41,100 @@ const showCreateSlideOver = ref(false);
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">Clientes</h2>
-                <PrimaryButton @click="showCreateSlideOver = true">
-                    <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                    Nueva Empresa
-                </PrimaryButton>
+                <div>
+                    <h2 class="text-2xl font-bold leading-tight text-gray-900">Cartera de Clientes</h2>
+                    <p class="text-sm text-gray-500 mt-1">Gestiona tus empresas, contactos y proyectos asociados.</p>
+                </div>
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                
-                <div v-if="clients.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div v-for="client in clients" :key="client.id" class="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow sm:rounded-xl p-5 border border-gray-100 flex flex-col justify-between">
-                        
-                        <div>
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="bg-gray-50 p-2 rounded-lg text-gray-500">
-                                    <BuildingOfficeIcon class="h-6 w-6" />
-                                </div>
-                                <span :class="[client.tax_id ? 'text-green-700 bg-green-50 ring-green-600/20' : 'text-gray-600 bg-gray-50 ring-gray-500/10', 'rounded-md whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset']">
-                                    {{ client.country }}
-                                </span>
+        <div class="py-0">
+            
+            <!-- Grid Layout -->
+            <div v-if="clients.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+                <div v-for="client in clients" :key="client.id" class="group relative bg-white overflow-hidden rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    
+                    <!-- Decorative Banner -->
+                    <div class="h-16 bg-slate-800"></div>
+
+                    <div class="px-5 pt-0 pb-4 flex-1 flex flex-col">
+                        <!-- Avatar / Logo -->
+                        <div class="-mt-8 mb-3 flex justify-between items-end">
+                            <div class="h-14 w-14 rounded-xl bg-white p-1 shadow-sm">
+                                <img :src="getAvatarUrl(client.name)" :alt="client.name" class="h-full w-full rounded-lg object-cover bg-gray-50" />
                             </div>
+                            <span class="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                {{ client.country }}
+                            </span>
+                        </div>
 
-                            <h3 class="text-lg font-semibold text-gray-900 truncate" :title="client.name">{{ client.name }}</h3>
-                            <p class="text-xs text-gray-500 mb-4">{{ client.tax_id || 'Sin ID Fiscal' }}</p>
-
-                            <div v-if="client.address" class="flex items-center text-xs text-gray-500 gap-1 mb-2">
-                                <MapPinIcon class="h-3 w-3" />
-                                <span class="truncate">{{ client.address }}</span>
+                        <!-- Info -->
+                        <div class="mb-3">
+                            <h3 class="text-base font-bold text-gray-900 truncate leading-tight" :title="client.name">
+                                {{ client.name }}
+                            </h3>
+                            <div class="flex items-center text-[10px] text-gray-500 mt-1 gap-2">
+                                <span class="truncate font-mono bg-gray-50 px-1 py-0.5 rounded border border-gray-100">{{ client.tax_id || 'N/A' }}</span>
+                                <span v-if="client.address" class="flex items-center truncate max-w-[60%]">
+                                    <MapPinIcon class="h-3 w-3 mr-0.5 flex-shrink-0" />
+                                    {{ client.address }}
+                                </span>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-4 border-t border-gray-50">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                    {{ client.projects_count }} Proyectos
+                        <!-- Metrics Grid -->
+                        <div class="grid grid-cols-2 gap-2 py-2 border-t border-dashed border-gray-100 mt-auto">
+                            <div class="text-center p-1.5 rounded-md bg-gray-50 transition-colors">
+                                <p class="text-[10px] text-gray-500 font-medium">Proyectos</p>
+                                <p class="text-sm font-bold text-gray-900">{{ client.projects_count }}</p>
+                            </div>
+                            <div class="text-center p-1.5 rounded-md bg-gray-50 transition-colors">
+                                <p class="text-[10px] text-gray-500 font-medium whitespace-nowrap">Estado</p>
+                                <span class="inline-flex items-center rounded-full bg-green-700 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                                    Activo
                                 </span>
-                                <Link :href="route('clients.edit', client.id)" class="text-brand font-medium hover:underline">
-                                    Gestionar
-                                </Link>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div v-else class="bg-white overflow-hidden shadow-sm sm:rounded-xl px-6 py-12 text-center">
-                    <BuildingOfficeIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No hay clientes</h3>
-                    <p class="mt-1 text-sm text-gray-500">Comienza creando una nueva empresa.</p>
-                    <div class="mt-6">
-                         <PrimaryButton @click="showCreateSlideOver = true">
-                            <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                            Nueva Empresa
-                        </PrimaryButton>
+                    <!-- Action Footer -->
+                    <div class="bg-gray-50 px-5 py-2.5 flex items-center justify-between group-hover:bg-night group-hover:text-white transition-colors duration-100">
+                        <span class="text-[10px] font-medium text-gray-500 group-hover:text-white uppercase tracking-wide">Gestionar</span>
+                        <Link :href="route('clients.edit', client.id)" class="p-1 rounded-full bg-white text-gray-900 shadow-sm group-hover:bg-white group-hover:text-gray-900 transition-all">
+                            <ArrowRightIcon class="h-3.5 w-3.5" />
+                        </Link>
                     </div>
+
+                    <!-- Full Card Link Overlay -->
+                    <Link :href="route('clients.edit', client.id)" class="absolute inset-0 z-10 focus:outline-none">
+                        <span class="sr-only">Ver detalles de {{ client.name }}</span>
+                    </Link>
                 </div>
 
+                <!-- Add New Card (Ghost) -->
+                 <button @click="showCreateSlideOver = true" class="group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 p-12 hover:border-brand hover:bg-blue-50/30 transition-all duration-300">
+                    <div class="rounded-full bg-gray-100 p-4 group-hover:bg-white group-hover:shadow-md transition-all">
+                        <PlusIcon class="h-8 w-8 text-gray-400 group-hover:text-brand" />
+                    </div>
+                    <span class="mt-4 text-sm font-semibold text-gray-500 group-hover:text-brand">Registrar Nueva Empresa</span>
+                </button>
             </div>
+
+            <!-- Empty State -->
+            <div v-else class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100 text-center">
+                <div class="bg-blue-50 p-6 rounded-full mb-4">
+                    <BuildingOffice2Icon class="h-16 w-16 text-brand" />
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">No tienes clientes aún</h3>
+                <p class="text-gray-500 mt-2 max-w-sm mx-auto">Comienza agregando tu primera empresa para gestionar proyectos y facturación.</p>
+                <div class="mt-8">
+                     <PrimaryButton @click="showCreateSlideOver = true" size="lg">
+                        <PlusIcon class="-ml-1 mr-2 h-5 w-5" />
+                        Crear Primer Cliente
+                    </PrimaryButton>
+                </div>
+            </div>
+
         </div>
 
         <CreateClientSlideOver :open="showCreateSlideOver" @close="showCreateSlideOver = false" />

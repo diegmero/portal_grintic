@@ -11,12 +11,29 @@ import { Bars3Icon, BellIcon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIco
 const showingNavigationDropdown = ref(false);
 const showCommandPalette = ref(false);
 
-const navigation = [
-  { name: 'Dashboard', href: route('dashboard'), icon: HomeIcon, current: route().current('dashboard') },
-  { name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') },
-  { name: 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') },
-  { name: 'Finanzas', href: route('finance.index'), icon: CurrencyDollarIcon, current: route().current('finance.*') },
-];
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const isClient = computed(() => {
+    return user.value?.roles?.some(role => role.name === 'client');
+});
+
+const navigation = computed(() => {
+    const nav = [
+        { name: isClient.value ? 'Mi Portal' : 'Dashboard', href: route('dashboard'), icon: HomeIcon, current: route().current('dashboard') },
+    ];
+
+    if (!isClient.value) {
+        nav.push({ name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') });
+    }
+
+    nav.push({ name: isClient.value ? 'Mis Proyectos' : 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') });
+    nav.push({ name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: route('finance.index'), icon: CurrencyDollarIcon, current: route().current('finance.*') });
+
+    return nav;
+});
 
 import ToastNotification from '@/Components/ToastNotification.vue';
 
@@ -73,7 +90,7 @@ onUnmounted(() => {
                     </div>
                     <div class="flex flex-col">
                          <span class="text-sm font-medium text-white">{{ $page.props.auth.user.name }}</span>
-                         <span class="text-xs text-gray-400">Admin</span>
+                         <span class="text-xs text-gray-400 capitalize">{{ $page.props.auth.user.roles[0]?.name || 'User' }}</span>
                     </div>
                 </div>
             </div>
@@ -130,6 +147,11 @@ onUnmounted(() => {
 
             <main class="py-10">
                 <div class="px-4 sm:px-6 lg:px-8">
+                    <!-- Page Header -->
+                    <div v-if="$slots.header" class="mb-8 flex items-center justify-between">
+                         <slot name="header" />
+                    </div>
+
                      <!-- Slot Content -->
                      <slot />
                 </div>

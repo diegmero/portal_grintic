@@ -1,5 +1,4 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
   Combobox,
   ComboboxInput,
@@ -12,26 +11,42 @@ import {
 } from '@headlessui/vue'
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { ExclamationTriangleIcon, FolderIcon, LifebuoyIcon, ShareIcon, UsersIcon } from '@heroicons/vue/24/outline'
-import { router } from '@inertiajs/vue3'
+import { usePage, router } from '@inertiajs/vue3'
+import { computed, ref, defineEmits, defineProps, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   open: Boolean,
 })
 
 const emit = defineEmits(['close'])
-
 const query = ref('')
 
-const links = [
-  { name: 'Dashboard', href: '/dashboard', icon: UsersIcon },
-  { name: 'Clientes', href: '/clients', icon: UsersIcon },
-  { name: 'Proyectos', href: '/projects', icon: FolderIcon },
-]
+const page = usePage()
+const isClient = computed(() => {
+    return page.props.auth.user?.roles?.some(role => role.name === 'client')
+})
+
+const links = computed(() => {
+  const base = [
+    { name: isClient.value ? 'Mi Portal' : 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: isClient.value ? 'Mis Proyectos' : 'Proyectos', href: '/projects', icon: FolderIcon },
+    { name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: '/finance', icon: CurrencyDollarIcon },
+  ];
+
+  if (!isClient.value) {
+    base.push({ name: 'Clientes', href: '/clients', icon: UsersIcon });
+    base.push({ name: 'Crear Nuevo Cliente', href: '/clients?create=true', icon: UsersIcon });
+  }
+
+  return base;
+})
+
+import { HomeIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline'
 
 const filteredItems = computed(() => {
   return query.value === ''
-    ? links
-    : links.filter((item) => {
+    ? links.value
+    : links.value.filter((item) => {
         return item.name.toLowerCase().includes(query.value.toLowerCase())
       })
 })

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,12 +11,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Task extends Model implements HasMedia
 {
-    use HasFactory, HasUuids, SoftDeletes, InteractsWithMedia;
+    use HasFactory, HasUuids, SoftDeletes, InteractsWithMedia, LogsActivity;
 
     protected $fillable = [
         'stage_id',
@@ -23,15 +26,26 @@ class Task extends Model implements HasMedia
         'description',
         'status',
         'priority',
+        'has_subtasks',
         'due_date',
         'weight',
     ];
 
     protected $casts = [
         'status' => TaskStatus::class,
+        'priority' => TaskPriority::class,
+        'has_subtasks' => 'boolean',
         'due_date' => 'date',
         'weight' => 'decimal:2',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'status', 'priority'])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "Tarea fue {$eventName}");
+    }
 
     public function stage(): BelongsTo
     {

@@ -4,29 +4,105 @@ namespace App\Actions\Projects;
 
 use App\Enums\TaskStatus;
 use App\Models\Project;
-use App\Models\Task;
 
 class RecalculateProjectProgressAction
 {
     public function execute(Project $project): void
     {
-        // 1. Get all tasks for this project via stages
-        $tasksQuery = Task::whereIn('stage_id', $project->stages()->select('id'));
+        $project->refresh();
+        $project->load('stages.tasks.subtasks');
+
+        // 1. Cascade completion: Subtasks -> Tasks
+        $this->cascadeTaskCompletion($project);
         
-        $totalWeight = $tasksQuery->sum('weight');
+        // 2. Cascade: Tasks -> Stages
+        $this->cascadeStageCompletion($project);
         
-        if ($totalWeight <= 0) {
-            $project->update(['progress' => 0]);
-            return;
+        // 3. Calculate project progress (NO weights - all tasks equal)
+        $this->calculateProjectProgress($project);
+    }
+
+    private function cascadeTaskCompletion(Project $project): void
+    {
+        foreach ($project->stages as $stage) {
+            foreach ($stage->tasks as $task) {
+                if ($task->subtasks->isEmpty()) {
+                    continue;
+                }
+
+                $totalSubtasks = $task->subtasks->count();
+                $completedSubtasks = $task->subtasks->where('is_completed', true)->count();
+
+                if ($totalSubtasks > 0 && $totalSubtasks === $completedSubtasks) {
+                    if ($task->status !== TaskStatus::Completed) {
+                        $task->status = TaskStatus::Completed;
+                        $task->saveQuietly();
+                    }
+                } elseif ($task->status === TaskStatus::Completed && $completedSubtasks < $totalSubtasks) {
+                    $task->status = TaskStatus::InProgress;
+                    $task->saveQuietly();
+                }
+            }
+        }
+    }
+
+    private function cascadeStageCompletion(Project $project): void
+    {
+        foreach ($project->stages as $stage) {
+            $stage->load('tasks');
+            
+            $totalTasks = $stage->tasks->count();
+            $completedTasks = $stage->tasks->where('status', TaskStatus::Completed)->count();
+
+            $newStatus = $stage->status;
+            if ($totalTasks > 0 && $totalTasks === $completedTasks) {
+                $newStatus = 'completed';
+            } elseif ($completedTasks > 0) {
+                $newStatus = 'in_progress';
+            } elseif ($stage->status === 'completed') {
+                $newStatus = 'pending';
+            }
+
+            if ($stage->status !== $newStatus) {
+                $stage->status = $newStatus;
+                $stage->saveQuietly();
+            }
+        }
+    }
+
+    private function calculateProjectProgress(Project $project): void
+    {
+        $project->refresh();
+        $project->load('stages.tasks.subtasks');
+
+        $totalProgress = 0;
+        $totalTasks = 0;
+
+        foreach ($project->stages as $stage) {
+            foreach ($stage->tasks as $task) {
+                $totalTasks++;
+                $totalProgress += $this->calculateTaskProgress($task);
+            }
         }
 
-        // 2. Sum weight of completed tasks
-        $completedWeight = $tasksQuery->where('status', TaskStatus::Completed)->sum('weight');
+        // Simple average (no weights)
+        $progress = $totalTasks > 0 ? (int) round($totalProgress / $totalTasks) : 0;
 
-        // 3. Calculate percentage
-        $progress = ($completedWeight / $totalWeight) * 100;
+        $project->progress = $progress;
+        $project->saveQuietly();
+    }
 
-        // 4. Update Project (no decimals needed for integer progress column, but could round)
-        $project->update(['progress' => (int) round($progress)]);
+    /**
+     * Task progress based on subtasks or status
+     */
+    private function calculateTaskProgress($task): float
+    {
+        if ($task->subtasks->isNotEmpty()) {
+            $totalSubtasks = $task->subtasks->count();
+            $completedSubtasks = $task->subtasks->where('is_completed', true)->count();
+            return $totalSubtasks > 0 ? ($completedSubtasks / $totalSubtasks) * 100 : 0;
+        }
+
+        return $task->status === TaskStatus::Completed ? 100 : 0;
     }
 }
