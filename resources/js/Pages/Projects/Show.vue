@@ -376,8 +376,8 @@ const deleteSubtask = (subtaskId) => {
                                         <div class="flex items-center gap-3">
                                             <!-- Stage Progress -->
                                             <div class="flex items-center gap-2">
-                                                <div class="w-24 bg-gray-200 rounded-full h-1.5">
-                                                    <div class="bg-brand h-1.5 rounded-full transition-all" 
+                                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-brand h-2 rounded-full transition-all" 
                                                         :style="{ width: getStageProgress(stage) + '%' }"></div>
                                                 </div>
                                                 <span class="text-xs font-medium text-gray-600 w-8">
@@ -387,17 +387,17 @@ const deleteSubtask = (subtaskId) => {
                                             <!-- Actions -->
                                             <div class="flex items-center gap-1">
                                                 <button @click="openCreateTaskSlideOver(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
-                                                    <PlusIcon class="h-4 w-4" />
+                                                    <PlusIcon class="h-5 w-5" />
                                                 </button>
                                                 <label class="p-1.5 text-gray-400 hover:text-brand rounded cursor-pointer" title="Subir Archivo">
-                                                    <ArrowUpTrayIcon class="h-4 w-4" />
+                                                    <ArrowUpTrayIcon class="h-5 w-5" />
                                                     <input type="file" class="hidden" @change="uploadFileToStage(stage.id, $event)" />
                                                 </label>
                                                 <button @click="openEditStageModal(stage)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Editar Etapa">
-                                                    <PencilSquareIcon class="h-4 w-4" />
+                                                    <PencilSquareIcon class="h-5 w-5" />
                                                 </button>
                                                 <button @click="deleteStage(stage.id)" class="p-1.5 text-gray-400 hover:text-red-500 rounded" title="Eliminar">
-                                                    <TrashIcon class="h-4 w-4" />
+                                                    <TrashIcon class="h-5 w-5" />
                                                 </button>
                                             </div>
                                         </div>
@@ -457,7 +457,7 @@ const deleteSubtask = (subtaskId) => {
                                         </span>
 
                                         <!-- Priority Badge -->
-                                        <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-[10px] font-medium px-1.5 py-0.5 rounded']">
+                                        <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-xs font-medium px-1.5 py-0.5 rounded']">
                                             {{ priorityConfig[task.priority]?.label || task.priority }}
                                         </span>
 
