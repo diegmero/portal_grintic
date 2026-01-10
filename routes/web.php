@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('clients', \App\Http\Controllers\ClientController::class)->only(['index', 'store', 'edit', 'update']);
+    Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
     Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'show']);
     Route::patch('/tasks/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('tasks.update');
     Route::post('/tasks/{task}/media', [\App\Http\Controllers\TaskMediaController::class, 'store'])->name('tasks.media.store');

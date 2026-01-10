@@ -28,7 +28,7 @@ class ClientController extends Controller
     public function edit(Company $client): Response
     {
         return Inertia::render('Clients/Edit', [
-            'client' => $client,
+            'client' => $client->load('users'),
         ]);
     }
 
@@ -36,5 +36,25 @@ class ClientController extends Controller
     {
         $client->update($request->validated());
         return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente.');
+    }
+
+    public function updateUser(\Illuminate\Http\Request $request, Company $client, \App\Models\User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        
+        if (!empty($validated['password'])) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', 'Usuario actualizado exitosamente.');
     }
 }
