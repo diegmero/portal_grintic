@@ -11,11 +11,11 @@ class ProjectMediaController extends Controller
 {
     public function store(Request $request, Project $project): RedirectResponse
     {
-        // Check file limit (max 10 files per project - giving more space for project docs)
+        // Check file limit (max 5 files per project)
         $currentFileCount = $project->getMedia('project_files')->count();
-        if ($currentFileCount >= 10) {
+        if ($currentFileCount >= 5) {
             throw ValidationException::withMessages([
-                'file' => 'Este proyecto ya tiene el máximo de 10 archivos permitidos.',
+                'file' => 'Este proyecto ya tiene el máximo de 5 archivos permitidos.',
             ]);
         }
 

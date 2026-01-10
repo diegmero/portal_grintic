@@ -266,19 +266,19 @@ const deleteSubtask = (subtaskId) => {
         </template>
 
         <div class="py-0">
-            <div class="mx-auto max-w-7xl">
-                <div class="flex gap-6">
+
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     
                     <!-- Sidebar - Project Info (Compact) -->
-                    <div class="w-64 flex-shrink-0">
+                    <div class="lg:col-span-1">
                         <div class="bg-white rounded-lg border border-gray-200 sticky top-4">
                             <!-- Status Header -->
                             <div class="p-3 border-b border-gray-100">
                                 <div class="flex items-center gap-2 mb-2">
                                     <span :class="[statusConfig[project.status]?.class || 'bg-gray-500', 'w-2 h-2 rounded-full']"></span>
-                                    <span class="text-xs font-medium text-gray-700">{{ statusConfig[project.status]?.label || project.status }}</span>
+                                    <span class="text-sm font-medium text-gray-700">{{ statusConfig[project.status]?.label || project.status }}</span>
                                 </div>
-                                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                <div class="flex items-center justify-between text-sm text-gray-500 mb-1">
                                     <span>Progreso</span>
                                     <span class="font-semibold text-gray-900">{{ project.progress }}%</span>
                                 </div>
@@ -288,7 +288,7 @@ const deleteSubtask = (subtaskId) => {
                             </div>
 
                             <!-- Info List -->
-                            <div class="p-3 space-y-2 text-xs">
+                            <div class="p-3 space-y-2 text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-gray-500">Cliente</span>
                                     <span class="text-gray-900 font-medium truncate max-w-[120px]">{{ project.company?.name || '—' }}</span>
@@ -314,33 +314,40 @@ const deleteSubtask = (subtaskId) => {
                             <!-- Project Files (Secure) -->
                             <div class="p-3 border-t border-gray-100">
                                 <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-xs font-semibold text-gray-900">Archivos del Proyecto</h4>
-                                    <button @click="showEditProject = true" class="text-xs text-brand hover:underline">Gestionar</button>
+                                    <h4 class="text-sm font-semibold text-gray-900">Archivos del Proyecto</h4>
                                 </div>
                                 <div v-if="project.media && project.media.length > 0" class="space-y-1">
                                     <button 
                                         v-for="file in project.media" 
                                         :key="file.id"
                                         @click="openFilePreview(route('projects.media.show', { project: project.id, media: file.id }), file.file_name)"
-                                        class="flex items-center gap-2 text-xs text-gray-600 hover:text-brand w-full text-left truncate group px-1 py-0.5 rounded hover:bg-gray-50"
+                                        class="flex items-center gap-2 text-sm text-gray-600 hover:text-brand w-full text-left truncate group px-1 py-0.5 rounded hover:bg-gray-50"
                                     >
-                                        <PaperClipIcon class="h-3 w-3 flex-shrink-0 text-gray-400 group-hover:text-brand" />
+                                        <PaperClipIcon class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-brand" />
                                         <span class="truncate">{{ file.file_name }}</span>
                                     </button>
                                 </div>
-                                <p v-else class="text-xs text-gray-400 italic px-1">Sin archivos adjuntos.</p>
+                                <p v-else class="text-sm text-gray-400 px-1">Sin archivos adjuntos.</p>
                             </div>
 
                             <!-- Description -->
                             <div v-if="project.description" class="p-3 border-t border-gray-100">
-                                <p class="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Descripción</p>
-                                <p class="text-xs text-gray-700 leading-relaxed">{{ project.description }}</p>
+                                <p class="text-sm text-gray-700 font-semibold tracking-wide mb-1">Descripción</p>
+                                <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{ project.description }}</p>
+                            </div>
+
+                             <!-- Edit Button -->
+                             <div class="p-3 border-t border-gray-100">
+                                <button @click="showEditProject = true" class="w-full flex justify-center items-center gap-2 rounded-md bg-white border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
+                                    <PencilSquareIcon class="h-4 w-4 text-gray-500" />
+                                    Editar Proyecto
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Main Content -->
-                    <div class="flex-1 min-w-0">
+                    <div class="lg:col-span-4 min-w-0">
                         <!-- Header -->
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -471,7 +478,7 @@ const deleteSubtask = (subtaskId) => {
                         </div>
                     </div>
                 </div>
-            </div>
+
         </div>
 
         <!-- Add Stage Modal -->
@@ -503,7 +510,7 @@ const deleteSubtask = (subtaskId) => {
         </Modal>
 
         <!-- File Preview Modal -->
-        <Modal :show="showFilePreviewModal" @close="closeFilePreview" maxWidth="4xl">
+        <Modal :show="showFilePreviewModal" @close="closeFilePreview" maxWidth="3xl">
             <div class="p-4 h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-medium text-gray-900">{{ previewFileName }}</h3>

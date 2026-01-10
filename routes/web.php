@@ -27,7 +27,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('clients', \App\Http\Controllers\ClientController::class)->only(['index', 'store', 'edit', 'update']);
     Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
-    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show']);
+    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show', 'update']);
     Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
     Route::get('/my-projects/{project}', [\App\Http\Controllers\ProjectController::class, 'clientView'])->name('projects.client-view');
     

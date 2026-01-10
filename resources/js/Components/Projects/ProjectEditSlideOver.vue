@@ -24,13 +24,18 @@ const form = useForm({
     due_date: '',
 });
 
+const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    return dateString.substring(0, 10);
+};
+
 watch(() => props.project, (val) => {
     if (val) {
         form.name = val.name;
         form.description = val.description;
         form.status = val.status;
-        form.start_date = val.start_date;
-        form.due_date = val.due_date;
+        form.start_date = val.start_date ? formatDateForInput(val.start_date) : '';
+        form.due_date = val.due_date ? formatDateForInput(val.due_date) : '';
     }
 }, { immediate: true });
 
@@ -42,6 +47,7 @@ const submit = () => {
 
 // File Upload
 const isUploading = ref(false);
+const uploadProgress = ref(0);
 const fileInput = ref(null);
 
 const uploadFile = (event) => {
@@ -57,11 +63,16 @@ const uploadFile = (event) => {
     router.post(route('projects.media.store', props.project.id), { file }, {
         forceFormData: true,
         preserveScroll: true,
+        onProgress: (progress) => {
+            uploadProgress.value = progress.percentage;
+        },
         onFinish: () => {
             isUploading.value = false;
+            uploadProgress.value = 0;
             fileInput.value.value = '';
         },
         onError: (errors) => {
+            isUploading.value = false;
             if (errors.file) alert(errors.file);
         }
     });
@@ -97,7 +108,7 @@ const statusOptions = [
             <div v-show="show" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$emit('close')"></div>
         </Transition>
 
-        <div class="fixed inset-0 overflow-hidden" v-show="show">
+        <div class="fixed inset-0 overflow-hidden pointer-events-none" v-show="show">
             <div class="absolute inset-0 overflow-hidden">
                 <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
                     <Transition
@@ -165,15 +176,18 @@ const statusOptions = [
                                         
                                         <!-- Upload Box -->
                                         <div class="mb-4">
-                                            <label class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-brand focus:outline-none">
-                                                <span class="flex flex-col items-center justify-center space-y-2">
+                                            <label class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-md appearance-none cursor-pointer hover:border-brand focus:outline-none relative overflow-hidden">
+                                                <span class="flex flex-col items-center justify-center space-y-2 relative z-10">
                                                     <ArrowUpTrayIcon class="w-6 h-6 text-gray-400" />
                                                     <span class="font-medium text-gray-600">
-                                                        {{ isUploading ? 'Subiendo...' : 'Click para subir archivo' }}
+                                                        {{ isUploading ? `Subiendo... ${uploadProgress}%` : 'Click para subir archivo' }}
                                                     </span>
                                                     <span class="text-xs text-gray-500">PDF, Word, Excel (Max 5MB)</span>
                                                 </span>
                                                 <input ref="fileInput" type="file" name="file_upload" class="hidden" @change="uploadFile" :disabled="isUploading" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                                                
+                                                <!-- Progress Bar Background -->
+                                                <div v-if="isUploading" class="absolute bottom-0 left-0 h-1 bg-brand transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
                                             </label>
                                         </div>
 

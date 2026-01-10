@@ -8,6 +8,7 @@ use App\Http\Requests\StoreProjectRequest;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
@@ -28,6 +29,7 @@ class ProjectController extends Controller
                 'stages.tasks.comments.user', 
                 'stages.tasks.media',
                 'stages.media',
+                'media',
             ]),
         ]);
     }
@@ -61,5 +63,20 @@ class ProjectController extends Controller
     {
         Project::create($request->validated());
         return redirect()->back()->with('success', 'Proyecto creado exitosamente.');
+    }
+
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|in:active,on_hold,completed,cancelled',
+            'start_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
+        ]);
+
+        $project->update($validated);
+
+        return redirect()->back()->with('success', 'Proyecto actualizado exitosamente.');
     }
 }
