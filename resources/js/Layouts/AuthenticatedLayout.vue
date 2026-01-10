@@ -1,197 +1,138 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import CommandPalette from '@/Components/CommandPalette.vue';
+import { Bars3Icon, BellIcon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
 
 const showingNavigationDropdown = ref(false);
+const showCommandPalette = ref(false);
+
+const navigation = [
+  { name: 'Dashboard', href: route('dashboard'), icon: HomeIcon, current: route().current('dashboard') },
+  { name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') },
+  { name: 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') },
+  { name: 'Finanzas', href: route('finance.index'), icon: CurrencyDollarIcon, current: route().current('finance.*') },
+];
+
+import ToastNotification from '@/Components/ToastNotification.vue';
+
+const openPalette = () => {
+    showCommandPalette.value = true;
+};
+
+const closePalette = () => {
+    showCommandPalette.value = false;
+};
+
+const onKeydown = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        openPalette();
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', onKeydown);
+});
+
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav
-                class="border-b border-gray-100 bg-white"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
+    <div class="min-h-screen bg-pastel text-gray-900 font-sans">
+        
+        <!-- Command Palette -->
+        <CommandPalette :open="showCommandPalette" @close="closePalette" />
+        <ToastNotification />
 
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
-                >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
-                    >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
-                            </div>
-                        </div>
-
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
+        <!-- Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-night text-white shadow-xl hidden md:flex flex-col transition-all duration-300">
+            <div class="flex h-16 shrink-0 items-center px-6 bg-night border-b border-white/10">
+                <Link :href="route('dashboard')" class="flex items-center gap-2">
+                    <ApplicationLogo class="h-8 w-auto fill-current text-white" />
+                    <span class="font-bold text-lg tracking-wide">GrinWeb</span>
+                </Link>
+            </div>
+            <nav class="flex flex-1 flex-col px-4 py-6 space-y-1">
+                <Link v-for="item in navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']">
+                    <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                    {{ item.name }}
+                </Link>
             </nav>
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-brand flex items-center justify-center text-white font-bold">
+                        {{ $page.props.auth.user.name.charAt(0) }}
+                    </div>
+                    <div class="flex flex-col">
+                         <span class="text-sm font-medium text-white">{{ $page.props.auth.user.name }}</span>
+                         <span class="text-xs text-gray-400">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <!-- Page Heading -->
-            <header
-                class="bg-white shadow"
-                v-if="$slots.header"
-            >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
+            
+            <!-- Top Header -->
+            <header class="sticky top-0 z-40 flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                <button type="button" class="-m-2.5 p-2.5 text-gray-700 md:hidden" @click="showingNavigationDropdown = true">
+                    <span class="sr-only">Open sidebar</span>
+                    <Bars3Icon class="h-6 w-6" aria-hidden="true" />
+                </button>
+
+                <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+                    <div class="relative flex flex-1 items-center" @click="openPalette">
+                         <div class="w-full max-w-md relative text-gray-400 focus-within:text-gray-600 cursor-pointer">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <MagnifyingGlassIcon class="h-5 w-5" aria-hidden="true" />
+                            </div>
+                            <div class="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6 bg-gray-50/50">
+                                Buscar (Cmd+K)
+                            </div>
+                         </div>
+                    </div>
+                    <div class="flex items-center gap-x-4 lg:gap-x-6">
+                        <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+                            <span class="sr-only">View notifications</span>
+                            <BellIcon class="h-6 w-6" aria-hidden="true" />
+                        </button>
+
+                        <!-- Profile Dropdown -->
+                        <div class="relative">
+                            <Dropdown align="right" width="48">
+                                <template #trigger>
+                                    <button class="-m-1.5 flex items-center p-1.5">
+                                        <span class="sr-only">Open user menu</span>
+                                        <img class="h-8 w-8 rounded-full bg-gray-50" src="https://ui-avatars.com/api/?name=Admin+User&background=random" alt="" />
+                                        <span class="hidden lg:flex lg:items-center">
+                                            <span class="ml-4 text-sm font-semibold leading-6 text-gray-900" aria-hidden="true">{{ $page.props.auth.user.name }}</span>
+                                        </span>
+                                    </button>
+                                </template>
+                                <template #content>
+                                    <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
+                                    <DropdownLink :href="route('logout')" method="post" as="button"> Log Out </DropdownLink>
+                                </template>
+                            </Dropdown>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main>
-                <slot />
+            <main class="py-10">
+                <div class="px-4 sm:px-6 lg:px-8">
+                     <!-- Slot Content -->
+                     <slot />
+                </div>
             </main>
         </div>
     </div>
