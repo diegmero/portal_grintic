@@ -8,7 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import { ref } from 'vue';
 import Modal from '@/Components/Modal.vue';
-import { PencilSquareIcon } from '@heroicons/vue/24/outline';
+import { PencilSquareIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     client: Object,
@@ -51,8 +51,20 @@ const submitUserUpdate = () => {
              showUserModal.value = false;
              userForm.reset();
              editingUser.value = null;
+             showPassword.value = false;
         }
     });
+};
+
+const showPassword = ref(false);
+const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    userForm.password = password;
+    showPassword.value = true;
 };
 </script>
 
@@ -134,7 +146,7 @@ const submitUserUpdate = () => {
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button @click="editUser(user)" class="text-brand hover:text-indigo-900 flex items-center justify-end gap-1 w-full">
-                                                <PencilSquareIcon class="h-4 w-4" /> Editar / Clave
+                                                <PencilSquareIcon class="h-4 w-4" /> Editar
                                             </button>
                                         </td>
                                     </tr>
@@ -167,7 +179,33 @@ const submitUserUpdate = () => {
                     </div>
                      <div>
                         <InputLabel for="user_password" value="Nueva Contraseña (Opcional)" />
-                        <TextInput id="user_password" type="password" class="mt-1 block w-full" v-model="userForm.password" placeholder="Dejar en blanco para mantener actual" />
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="relative w-full">
+                                <TextInput 
+                                    id="user_password" 
+                                    :type="showPassword ? 'text' : 'password'" 
+                                    class="block w-full pr-10" 
+                                    v-model="userForm.password" 
+                                    placeholder="Dejar en blanco para mantener actual" 
+                                />
+                                <button 
+                                    type="button" 
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                                >
+                                    <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                                    <EyeSlashIcon v-else class="h-5 w-5" />
+                                </button>
+                            </div>
+                            <button 
+                                type="button" 
+                                @click="generatePassword" 
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                title="Generar contraseña segura"
+                            >
+                                <ArrowPathIcon class="h-4 w-4 mr-1" /> Generar
+                            </button>
+                        </div>
                          <p class="text-xs text-gray-500 mt-1">Mínimo 8 caracteres.</p>
                         <InputError :message="userForm.errors.password" />
                     </div>
