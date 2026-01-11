@@ -71,7 +71,7 @@ const formatCurrency = (value) => {
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl">
                     <div class="p-6 text-gray-900">
-                        Bienvenido a GrinWeb, tu portal de gestión.
+                        Bienvenido a GrinTic, tu portal de gestión.
                     </div>
                 </div>
             </div>

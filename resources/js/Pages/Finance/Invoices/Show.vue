@@ -128,10 +128,10 @@ const statusConfig = {
         </template>
 
         <div class="py-0">
-             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start ">
                 
                 <!-- Left Column: The Invoice Document -->
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2 border border-gray-100">
                     <div class="bg-white shadow-lg rounded-none sm:rounded-lg print-container relative min-h-[800px] flex flex-col">
                         
                         <!-- Watermark -->
@@ -140,22 +140,24 @@ const statusConfig = {
                         </div>
 
                         <!-- Brand Header -->
-                        <div class="p-8 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+                        <div class="p-8 border-b-2 border-brand/20 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                             <div>
-                                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">FACTURA</h1>
-                                <p class="text-sm text-gray-500 mt-1"># {{ invoice.number }}</p>
+                                <h1 class="text-4xl font-black text-gray-900 tracking-tight">FACTURA</h1>
+                                <p class="text-base font-mono text-brand mt-2 font-semibold"># {{ invoice.number }}</p>
                             </div>
                             <div class="text-right">
-                                <!-- Placeholder for Company Logo -->
-                                <div class="font-bold text-xl text-brand mb-1">GrinWeb</div>
-                                <div class="text-sm text-gray-500">Nit: 900.123.456</div>
-                                <div class="text-sm text-gray-500">Calle 123 # 45-67</div>
-                                <div class="text-sm text-gray-500">Bogotá, Colombia</div>
+                                <!-- Company Logo & Info -->
+                                <img src="/images/logo-dark.png" alt="GrinTic" class="h-12 w-auto ml-auto mb-3" />
+                                <div class="text-xs text-gray-500 space-y-0.5">
+                                    <div class="font-medium text-gray-700">RUT: 1121854219</div>
+                                    <div>Bogotá, Colombia</div>
+                                    <div class="text-brand font-medium">www.grintic.com</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Client & Dates -->
-                        <div class="p-8 grid grid-cols-2 gap-8">
+                        <div class="p-8 grid grid-cols-2 gap-8 print-spacing">
                             <div>
                                 <h4 class="text-xs uppercase font-bold text-gray-400 mb-2">Facturar a</h4>
                                 <h3 class="font-bold text-gray-900 text-lg">{{ invoice.company?.name }}</h3>
@@ -179,7 +181,7 @@ const statusConfig = {
                         </div>
 
                         <!-- Items Table -->
-                        <div class="flex-grow px-8">
+                        <div class="flex-grow px-8 print-section-spacing">
                             <table class="w-full">
                                 <thead>
                                     <tr class="border-b-2 border-brand">
@@ -201,23 +203,49 @@ const statusConfig = {
                         </div>
 
                         <!-- Footer Totals -->
-                        <div class="p-8 bg-gray-50 border-t border-gray-100 mt-auto">
-                            <div class="flex justify-end">
-                                <div class="w-1/2 md:w-1/3 space-y-3">
-                                    <div class="flex justify-between text-lg font-bold text-gray-900">
-                                        <span>Total</span>
+                        <div class="p-8 bg-gray-50 border-t border-gray-200 print-section-spacing">
+                            <div class="flex justify-between items-start gap-8">
+                                <!-- Notes/Terms Column -->
+                                <div class="flex-1 max-w-sm print-notes-spacing">
+                                    <h4 class="text-xs uppercase font-bold text-gray-400 mb-2">Notas</h4>
+                                    <p class="text-xs text-gray-500 leading-relaxed">
+                                        Gracias por confiar en GrinTic. El pago se considera recibido una vez confirmado en nuestra cuenta bancaria. Para cualquier consulta sobre esta factura, contáctenos.
+                                    </p>
+                                </div>
+                                <!-- Totals Column -->
+                                <div class="w-56 space-y-1">
+                                    <div class="flex justify-between text-sm text-gray-600 py-1">
+                                        <span>Subtotal</span>
+                                        <span class="font-medium">{{ formatCurrency(invoice.total) }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm text-gray-500 py-1">
+                                        <span>IVA (0%)</span>
+                                        <span>$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-base font-bold text-gray-900 border-t-2 border-gray-300 pt-3 mt-2">
+                                        <span>TOTAL</span>
                                         <span>{{ formatCurrency(invoice.total) }}</span>
                                     </div>
-                                    <div class="flex justify-between text-sm text-gray-600 border-t border-gray-200 pt-2">
+                                    <div v-if="invoice.balance_due < invoice.total" class="flex justify-between text-sm text-gray-600 pt-2 no-print">
                                         <span>Abonado</span>
                                         <span>{{ formatCurrency(invoice.total - invoice.balance_due) }}</span>
                                     </div>
-                                    <div class="flex justify-between text-base font-bold text-brand pt-1">
+                                    <div v-if="invoice.balance_due > 0" class="flex justify-between text-sm font-semibold text-gray-800 border-t border-gray-200 pt-2 mt-1">
                                         <span>Saldo Pendiente</span>
                                         <span>{{ formatCurrency(invoice.balance_due) }}</span>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Invoice Footer -->
+                        <div class="px-8 py-4 border-t border-gray-100 bg-white text-center">
+                            <p class="text-xs text-gray-400">
+                                <span class="font-semibold text-gray-500">GrinTic</span> · Desarrollo de Software & Servicios Cloud
+                            </p>
+                            <p class="text-xs text-brand font-medium mt-1">
+                                www.grintic.com · clientes@grintic.com
+                            </p>
                         </div>
 
                     </div>

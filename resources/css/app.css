@@ -1,3 +1,102 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =================================
+   PRINT STYLES
+   ================================= */
+@media print {
+
+    /* Hide elements with no-print class */
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Hide common layout elements */
+    nav,
+    aside,
+    footer {
+        display: none !important;
+    }
+
+    /* Hide all buttons except submit in forms */
+    button:not([type="submit"]) {
+        display: none !important;
+    }
+
+    /* Hide fixed and sticky positioned elements */
+    [style*="position: fixed"],
+    [style*="position: sticky"] {
+        display: none !important;
+    }
+
+    /* Reset body */
+    body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Remove sidebar padding on main content */
+    .md\:pl-64 {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    /* Invoice container print styles */
+    .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Ensure colors print correctly */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Page setup */
+    @page {
+        size: letter;
+        margin: 0.5in;
+    }
+
+    /* Keep tables from breaking across pages */
+    table,
+    tr,
+    td,
+    th {
+        page-break-inside: avoid;
+    }
+
+    /* Main content should take full width */
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Content wrapper */
+    main>div {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Print-specific spacing adjustments */
+    .print-spacing {
+        margin-top: 2rem !important;
+        padding-top: 1.5rem !important;
+    }
+
+    /* Section spacing for print - Footer Totals block */
+    .print-section-spacing {
+        margin-top: 7rem !important;
+        padding-top: 1rem !important;
+    }
+}

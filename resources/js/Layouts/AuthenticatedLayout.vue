@@ -70,11 +70,10 @@ onUnmounted(() => {
         <ToastNotification />
 
         <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-night text-white shadow-xl hidden md:flex flex-col transition-all duration-300">
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-night text-white shadow-xl hidden md:flex flex-col transition-all duration-300 no-print">
             <div class="flex h-16 shrink-0 items-center px-6 bg-night border-b border-white/10">
-                <Link :href="route('dashboard')" class="flex items-center gap-2">
-                    <ApplicationLogo class="h-8 w-auto fill-current text-white" />
-                    <span class="font-bold text-lg tracking-wide">GrinWeb</span>
+                <Link :href="route('dashboard')" class="flex items-center gap-3">
+                    <ApplicationLogo variant="light" class="h-8" />
                 </Link>
             </div>
             <nav class="flex flex-1 flex-col px-4 py-6 space-y-1">
@@ -100,7 +99,7 @@ onUnmounted(() => {
         <div class="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
             
             <!-- Top Header -->
-            <header class="sticky top-0 z-40 flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+            <header class="sticky top-0 z-40 flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 no-print">
                 <button type="button" class="-m-2.5 p-2.5 text-gray-700 md:hidden" @click="showingNavigationDropdown = true">
                     <span class="sr-only">Open sidebar</span>
                     <Bars3Icon class="h-6 w-6" aria-hidden="true" />
@@ -148,7 +147,7 @@ onUnmounted(() => {
             <main class="py-10">
                 <div class="px-4 sm:px-6 lg:px-8">
                     <!-- Page Header -->
-                    <div v-if="$slots.header" class="mb-8 flex items-center justify-between">
+                    <div v-if="$slots.header" class="mb-8 flex items-center justify-between no-print">
                          <slot name="header" />
                     </div>
 
