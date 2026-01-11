@@ -77,10 +77,10 @@ class ClientServiceController extends Controller
                              $isBillable = false;
                              // Recalculate next one
                              $nextBillingDate->addMonth();
-                             $statusMessage = 'Ciclo vigente hasta ' . $nextBillingDate->format('d/m/Y');
+                             $statusMessage = 'Próxima facturación: ' . $nextBillingDate->format('d/m/Y');
                         } elseif (now()->lt($windowStart)) {
                             $isBillable = false;
-                            $statusMessage = 'Ciclo vigente hasta ' . $nextBillingDate->format('d/m/Y');
+                            $statusMessage = 'Próxima facturación: ' . $nextBillingDate->format('d/m/Y');
                         }
                     } elseif ($billingCycle->value === 'annual') {
                          // Similar logic but yearly
@@ -96,10 +96,10 @@ class ClientServiceController extends Controller
                          if ($lastInvoice->created_at->diffInDays(now()) < 10) {
                              $isBillable = false;
                              $nextBillingDate->addYear();
-                             $statusMessage = 'Renovación hasta ' . $nextBillingDate->format('d/m/Y');
+                             $statusMessage = 'Próxima renovación: ' . $nextBillingDate->format('d/m/Y');
                          } elseif (now()->lt($windowStart)) {
                             $isBillable = false;
-                            $statusMessage = 'Renovación hasta ' . $nextBillingDate->format('d/m/Y');
+                            $statusMessage = 'Próxima renovación: ' . $nextBillingDate->format('d/m/Y');
                         }
                     } elseif ($billingCycle->value === 'lifetime') {
                          $isBillable = false;

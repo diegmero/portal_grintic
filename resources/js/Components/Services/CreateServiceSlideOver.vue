@@ -126,6 +126,44 @@ const submit = () => {
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
 };
+
+// Duration Logic
+const durationType = ref('indefinite'); // indefinite, fixed
+const durationValue = ref(1);
+
+// When duration type or value changes, or start_date changes, recalculate end_date
+watch([durationType, durationValue, () => form.start_date, selectedProduct], ([type, val, startDate, product]) => {
+    if (!product || !startDate) return;
+    
+    // Only auto-calc if user chose Fixed Term
+    if (type === 'fixed') {
+        // Parse the input date string strictly as local date parts to avoid timezone shift
+        const [y, m, d] = startDate.split('-').map(Number);
+        
+        // Note: Month in JS Date is 0-indexed (0=Jan, 11=Dec)
+        // We create a date at 12:00 PM to capture the day safely away from midnight boundaries
+        let end = new Date(y, m - 1, d, 12, 0, 0); 
+        
+        if (product.billing_cycle === 'monthly') {
+            // Add N months
+            end.setMonth(end.getMonth() + parseInt(val));
+        } else if (product.billing_cycle === 'annual') {
+            // Add N years
+            end.setFullYear(end.getFullYear() + parseInt(val));
+        } else {
+             return;
+        }
+        
+        // Format back to YYYY-MM-DD using local time parts
+        const year = end.getFullYear();
+        const month = String(end.getMonth() + 1).padStart(2, '0');
+        const day = String(end.getDate()).padStart(2, '0');
+        
+        form.end_date = `${year}-${month}-${day}`;
+    } else if (type === 'indefinite') {
+        form.end_date = '';
+    }
+});
 </script>
 
 <template>
@@ -232,6 +270,38 @@ const formatCurrency = (amount) => {
                                         </div>
                                     </div>
 
+                                    <!-- Duration Helper -->
+                                    <div v-if="selectedProduct && ['monthly', 'annual'].includes(selectedProduct.billing_cycle)" class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                        <InputLabel value="Duración del Servicio" class="mb-2" />
+                                        <div class="flex items-center gap-4">
+                                            <div class="flex items-center">
+                                                <input id="dur_indefinite" type="radio" value="indefinite" v-model="durationType" class="h-4 w-4 text-brand border-gray-300 focus:ring-brand">
+                                                <label for="dur_indefinite" class="ml-2 block text-sm text-gray-700">Indefinido (Suscripción)</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="dur_fixed" type="radio" value="fixed" v-model="durationType" class="h-4 w-4 text-brand border-gray-300 focus:ring-brand">
+                                                <label for="dur_fixed" class="ml-2 block text-sm text-gray-700">Plazo Fijo</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="durationType === 'fixed'" class="mt-3 flex items-center gap-3">
+                                            <div class="w-24">
+                                                <input 
+                                                    type="number" 
+                                                    v-model="durationValue" 
+                                                    min="1" 
+                                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm"
+                                                >
+                                            </div>
+                                            <span class="text-sm text-gray-600">
+                                                {{ selectedProduct.billing_cycle === 'monthly' ? 'Meses' : 'Años' }}
+                                            </span>
+                                            <span class="text-xs text-gray-400 italic ml-auto">
+                                                Calculando fecha fin...
+                                            </span>
+                                        </div>
+                                    </div>
+
                                     <!-- Fechas -->
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -244,14 +314,18 @@ const formatCurrency = (amount) => {
                                             />
                                             <InputError :message="form.errors.start_date" class="mt-2" />
                                         </div>
-
                                         <div>
                                             <InputLabel for="end_date" value="Vencimiento" />
-                                            <CustomDatePicker 
-                                                v-model="form.end_date" 
-                                                placeholder="Sin vencimiento" 
-                                                class="mt-1"
-                                            />
+                                            <div class="relative">
+                                                <CustomDatePicker 
+                                                    v-model="form.end_date" 
+                                                    placeholder="Sin vencimiento" 
+                                                    class="mt-1"
+                                                    :disabled="durationType === 'fixed'"
+                                                />
+                                                <div v-if="durationType === 'fixed'" class="absolute inset-0 bg-gray-100 opacity-20 cursor-not-allowed"></div>
+                                            </div>
+                                            <p v-if="durationType === 'fixed'" class="text-xs text-brand mt-1">Calculado automáticamente</p>
                                             <InputError :message="form.errors.end_date" class="mt-2" />
                                         </div>
                                     </div>

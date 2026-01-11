@@ -149,8 +149,29 @@ const addServiceToInvoice = (serviceId) => {
         form.items.pop();
     }
 
+    // Determine Period Label
+    let periodLabel = '';
+    const date = service.next_billing_date ? new Date(service.next_billing_date) : new Date(); // Fallback to now
+    
+    // Adjust logic: next_billing_date is technically the START of the new period.
+    // If billing cycle is Monthly, period is That Month.
+    // If Annual, period is That Year.
+    
+    // We can use the billing_cycle from product. But clientServices payload has product obj.
+    const cycle = service.product.billing_cycle;
+
+    if (cycle === 'monthly') {
+        const monthName = date.toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
+        const year = date.getUTCFullYear();
+        periodLabel = ` (${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year})`;
+    } else if (cycle === 'annual') {
+        const year = date.getUTCFullYear();
+        periodLabel = ` (Anualidad ${year})`;
+    }
+    // Lifetime or one-time doesn't need period label usually, or maybe just year? Leave blank for now.
+
     form.items.push({
-        description: service.product.name + (service.notes ? ` - ${service.notes}` : ''),
+        description: service.product.name + periodLabel + (service.notes ? ` - ${service.notes}` : ''),
         quantity: 1,
         price: service.custom_price || service.product.base_price,
         client_service_id: service.id,
