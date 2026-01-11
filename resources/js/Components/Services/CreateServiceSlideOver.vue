@@ -9,6 +9,7 @@ import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import CustomSelect from '@/Components/CustomSelect.vue';
+import CustomDatePicker from '@/Components/CustomDatePicker.vue';
 
 const props = defineProps({
     open: Boolean,
@@ -171,23 +172,21 @@ const formatCurrency = (amount) => {
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <InputLabel for="start_date" value="Inicio" />
-                                                <input 
-                                                    id="start_date" 
+                                                <CustomDatePicker 
                                                     v-model="form.start_date" 
-                                                    type="date" 
-                                                    class="mt-1 block w-full rounded-lg bg-white py-2 pl-3 pr-3 text-sm shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
-                                                    required 
+                                                    placeholder="Seleccionar..." 
+                                                    class="mt-1"
+                                                    :required="true"
                                                 />
                                                 <InputError :message="form.errors.start_date" class="mt-2" />
                                             </div>
 
                                             <div>
                                                 <InputLabel for="end_date" value="Vencimiento" />
-                                                <input 
-                                                    id="end_date" 
+                                                <CustomDatePicker 
                                                     v-model="form.end_date" 
-                                                    type="date" 
-                                                    class="mt-1 block w-full rounded-lg bg-white py-2 pl-3 pr-3 text-sm shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+                                                    placeholder="Sin vencimiento" 
+                                                    class="mt-1"
                                                 />
                                                 <InputError :message="form.errors.end_date" class="mt-2" />
                                             </div>

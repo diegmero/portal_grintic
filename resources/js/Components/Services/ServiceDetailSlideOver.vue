@@ -42,25 +42,26 @@ const statusConfig = {
                         <TransitionChild as="template" enter="transform transition ease-in-out duration-500 sm:duration-700" enter-from="translate-x-full" enter-to="translate-x-0" leave="transform transition ease-in-out duration-500 sm:duration-700" leave-from="translate-x-0" leave-to="translate-x-full">
                             <DialogPanel class="pointer-events-auto w-screen max-w-md">
                                 <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                                    <div class="bg-brand px-4 py-6 sm:px-6">
+                                    <div class="bg-night px-4 py-6 sm:px-6">
                                         <div class="flex items-center justify-between">
                                             <DialogTitle class="text-base font-semibold leading-6 text-white">
                                                 Detalles del Servicio
                                             </DialogTitle>
                                             <div class="ml-3 flex h-7 items-center">
-                                                <button type="button" class="relative rounded-md bg-brand text-white/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" @click="emit('close')">
+                                                <button type="button" class="relative rounded-md bg-night text-gray-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" @click="emit('close')">
                                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </div>
+                                        <p class="mt-1 text-sm text-gray-300">Información del servicio asignado al cliente.</p>
                                     </div>
                                     
                                     <div v-if="service" class="relative flex-1 px-4 py-6 sm:px-6 space-y-6">
                                         
                                         <!-- Product & Client -->
                                         <div class="bg-gray-50 rounded-xl p-4">
-                                            <h3 class="font-bold text-lg text-gray-900">{{ service.product?.name }}</h3>
-                                            <p class="text-sm text-gray-600 mt-1">Cliente: {{ service.company?.name }}</p>
+                                            <h3 class="font-semibold text-gray-900">{{ service.product?.name }}</h3>
+                                            <p class="text-sm text-gray-500 mt-1">{{ service.company?.name }}</p>
                                             <span :class="[
                                                 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium',
                                                 statusConfig[service.status]?.class || 'bg-gray-100 text-gray-700'
@@ -76,7 +77,7 @@ const statusConfig = {
                                                     <CurrencyDollarIcon class="h-4 w-4" />
                                                     <span class="text-xs uppercase font-medium">Precio</span>
                                                 </div>
-                                                <p class="text-lg font-bold text-gray-900">
+                                                <p class="text-sm font-bold text-gray-900">
                                                     {{ formatCurrency(service.custom_price || service.product?.base_price) }}
                                                 </p>
                                                 <p v-if="service.custom_price" class="text-xs text-green-600">Precio especial</p>
@@ -87,7 +88,7 @@ const statusConfig = {
                                                     <span class="text-xs uppercase font-medium">Vencimiento</span>
                                                 </div>
                                                 <p :class="[
-                                                    'text-lg font-bold',
+                                                    'text-sm font-bold',
                                                     service.end_date && new Date(service.end_date) < new Date() ? 'text-red-600' : 'text-gray-900'
                                                 ]">
                                                     {{ formatDate(service.end_date) }}
@@ -97,12 +98,11 @@ const statusConfig = {
                                         </div>
 
                                         <!-- Credentials -->
-                                        <div v-if="service.credentials" class="bg-gradient-to-br from-brand/5 to-brand/10 border border-brand/20 rounded-xl p-4">
+                                        <div v-if="service.credentials" class="bg-gray-50 border border-gray-200 rounded-xl p-4">
                                             <div class="flex items-center gap-2 text-brand mb-3">
-                                                <KeyIcon class="h-5 w-5" />
-                                                <span class="text-sm font-semibold uppercase">Credenciales de Acceso</span>
+                                                <span class="text-sm text-gray-900 font-semibold uppercase">Credenciales de Acceso</span>
                                             </div>
-                                            <pre class="text-sm text-gray-800 font-mono whitespace-pre-wrap bg-white/50 rounded-lg p-3">{{ service.credentials }}</pre>
+                                            <pre class="text-xs text-gray-900 font-mono whitespace-pre-wrap bg-white/50 rounded-lg p-3">{{ service.credentials }}</pre>
                                         </div>
 
                                         <!-- Notes (only for admin) -->
