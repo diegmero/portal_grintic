@@ -19,7 +19,7 @@ defineExpose({ focus: () => input.value.focus() });
 
 <template>
     <input
-        class="rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand"
+        class="rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand py-2"
         v-model="model"
         ref="input"
     />

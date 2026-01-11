@@ -60,10 +60,16 @@ watch(filterForm, (val) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Finanzas</h2>
                     <p class="text-sm text-gray-500 mt-1">Gestión de facturación, cobros y saldos.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <Link :href="route('invoices.create')" class="inline-flex items-center gap-2 rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700">
+                        <PlusIcon class="h-5 w-5" />
+                        Nueva Factura
+                    </Link>
                 </div>
             </div>
         </template>
@@ -102,15 +108,6 @@ watch(filterForm, (val) => {
                                 placeholder="Todos los estados"
                             />
                         </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-900/5">
-                        <h3 class="font-semibold text-gray-900 mb-2">Acciones</h3>
-                        <Link :href="route('invoices.create')" class="w-full justify-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 flex items-center gap-2">
-                            <PlusIcon class="h-5 w-5" />
-                            Nueva Factura
-                        </Link>
                     </div>
 
                     <!-- Stats -->

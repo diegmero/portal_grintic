@@ -19,6 +19,10 @@ const props = defineProps({
         type: String,
         default: 'Seleccionar...',
     },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -32,15 +36,24 @@ const displayLabel = computed(() => {
 });
 
 const updateValue = (option) => {
-    emit('update:modelValue', option.value);
+    if (!props.disabled) {
+        emit('update:modelValue', option.value);
+    }
 };
 </script>
 
 <template>
-    <Listbox :model-value="selectedOption" @update:model-value="updateValue">
+    <Listbox :model-value="selectedOption" @update:model-value="updateValue" :disabled="disabled">
         <div class="relative">
-            <ListboxButton class="relative w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-10 text-left text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-brand">
-                <span class="block truncate" :class="{ 'text-gray-500': !selectedOption, 'text-gray-900': selectedOption }">
+            <ListboxButton 
+                :class="[
+                    'relative w-full rounded-lg py-2 pl-3 pr-10 text-left text-sm shadow-sm border focus:outline-none',
+                    disabled 
+                        ? 'bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400' 
+                        : 'bg-white border-gray-300 cursor-pointer focus:ring-2 focus:ring-brand focus:border-brand'
+                ]"
+            >
+                <span class="block truncate" :class="{ 'text-gray-400': !selectedOption || disabled, 'text-gray-900': selectedOption && !disabled }">
                     {{ displayLabel }}
                 </span>
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

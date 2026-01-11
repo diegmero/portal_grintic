@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, BellIcon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon } from '@heroicons/vue/24/outline';
 
 const showingNavigationDropdown = ref(false);
 const showCommandPalette = ref(false);
@@ -31,6 +31,10 @@ const navigation = computed(() => {
 
     nav.push({ name: isClient.value ? 'Mis Proyectos' : 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') });
     nav.push({ name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: route('invoices.index'), icon: CurrencyDollarIcon, current: route().current('invoices.*') });
+    
+    if (!isClient.value) {
+        nav.push({ name: 'Productos', href: route('products.index'), icon: CubeIcon, current: route().current('products.*') || route().current('services.*') });
+    }
 
     return nav;
 });

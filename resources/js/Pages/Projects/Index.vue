@@ -59,10 +59,16 @@ const filteredProjects = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Proyectos</h2>
                     <p class="text-sm text-gray-500 mt-1">Gestión de proyectos, etapas y tareas.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <PrimaryButton @click="showCreateSlideOver = true" class="inline-flex items-center gap-2">
+                        <PlusIcon class="h-5 w-5" />
+                        Nuevo Proyecto
+                    </PrimaryButton>
                 </div>
             </div>
         </template>
@@ -100,18 +106,6 @@ const filteredProjects = computed(() => {
                                     placeholder="Todos los estados"
                                 />
                             </div>
-                        </div>
-
-                        <!-- Create Button (Mobile-friendly location or stick to top) -->
-                        <div class="bg-white p-4 rounded-xl shadow-sm ring-1 ring-gray-900/5">
-                            <h3 class="font-semibold text-gray-900 mb-2">Acciones</h3>
-                            <button 
-                                @click="showCreateSlideOver = true"
-                                class="w-full justify-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand flex items-center gap-2"
-                            >
-                                <PlusIcon class="h-5 w-5" />
-                                Nuevo Proyecto
-                            </button>
                         </div>
 
                         <!-- Stats Cards -->

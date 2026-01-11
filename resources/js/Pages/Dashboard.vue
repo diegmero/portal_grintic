@@ -27,10 +27,10 @@ const formatCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">Dashboard</h2>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 text-center w-full">Bienvenido a GrinTic su portal de gestión</h2>
         </template>
 
-        <div class="py-12">
+        <div class="py-5">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 
                 <!-- Stats Grid -->
@@ -64,16 +64,10 @@ const formatCurrency = (value) => {
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dt class="truncate text-sm font-medium text-gray-500">Facturación Pendiente</dt>
-                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ formatCurrency(stats.pending_billing) }}</dd>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ formatCurrency(stats.pending_billing)}}</dd>
                         </div>
                     </div>
                 </dl>
-
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl">
-                    <div class="p-6 text-gray-900">
-                        Bienvenido a GrinTic, tu portal de gestión.
-                    </div>
-                </div>
             </div>
         </div>
     </AuthenticatedLayout>

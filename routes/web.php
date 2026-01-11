@@ -69,6 +69,12 @@ Route::middleware('auth')->group(function () {
     
     Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
     Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
+
+    // Products Catalog
+    Route::resource('products', \App\Http\Controllers\ProductController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Client Services
+    Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
 });
 
 require __DIR__.'/auth.php';
