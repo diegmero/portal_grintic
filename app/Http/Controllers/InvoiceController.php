@@ -46,6 +46,7 @@ class InvoiceController extends Controller
         return Inertia::render('Finance/Invoices/Index', [
             'invoices' => $invoices,
             'companies' => Company::select('id', 'name')->orderBy('name')->get(),
+            'projects' => Project::select('id', 'name', 'company_id')->get(),
             'filters' => $filters,
             'stats' => $stats,
         ]);

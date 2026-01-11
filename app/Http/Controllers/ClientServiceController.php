@@ -47,9 +47,14 @@ class ClientServiceController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
             'status' => 'required|string',
-            'credentials' => 'nullable|string',
+            'credentials' => 'nullable|array',
             'notes' => 'nullable|string',
         ]);
+
+        // Convert credentials object to JSON string
+        if (isset($validated['credentials'])) {
+            $validated['credentials'] = json_encode($validated['credentials']);
+        }
 
         ClientService::create($validated);
 
@@ -72,9 +77,14 @@ class ClientServiceController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
             'status' => 'required|string',
-            'credentials' => 'nullable|string',
+            'credentials' => 'nullable|array',
             'notes' => 'nullable|string',
         ]);
+
+        // Convert credentials object to JSON string
+        if (isset($validated['credentials'])) {
+            $validated['credentials'] = json_encode($validated['credentials']);
+        }
 
         $service->update($validated);
 

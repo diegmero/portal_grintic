@@ -1,6 +1,21 @@
 <script setup>
+import { ref, computed } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { XMarkIcon, PencilSquareIcon, KeyIcon, CalendarDaysIcon, DocumentTextIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
+import { 
+    XMarkIcon, 
+    PencilSquareIcon, 
+    KeyIcon, 
+    CalendarDaysIcon, 
+    DocumentTextIcon, 
+    CurrencyDollarIcon,
+    ClipboardDocumentIcon,
+    EyeIcon,
+    EyeSlashIcon,
+    CheckIcon,
+    LinkIcon,
+    UserIcon,
+    LockClosedIcon
+} from '@heroicons/vue/24/outline';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 
@@ -12,13 +27,16 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'edit']);
 
+const showPassword = ref(false);
+const copiedField = ref(null);
+
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
 };
 
 const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    if (!dateString) return 'Sin fecha';
+    return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 };
 
 const statusConfig = {
@@ -27,11 +45,45 @@ const statusConfig = {
     cancelled: { label: 'Cancelado', class: 'bg-gray-100 text-gray-500' },
     suspended: { label: 'Suspendido', class: 'bg-yellow-100 text-yellow-700' },
 };
+
+// Parse credentials - handle both string and object
+const parsedCredentials = computed(() => {
+    if (!props.service?.credentials) return null;
+    
+    const creds = props.service.credentials;
+    if (typeof creds === 'string') {
+        try {
+            return JSON.parse(creds);
+        } catch {
+            return { extra: creds };
+        }
+    }
+    return creds;
+});
+
+const hasCredentials = computed(() => {
+    if (!parsedCredentials.value) return false;
+    const c = parsedCredentials.value;
+    return c.panel_url || c.username || c.password || c.extra;
+});
+
+const copyToClipboard = async (text, fieldName) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        copiedField.value = fieldName;
+        setTimeout(() => {
+            copiedField.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
+};
+const titleRef = ref(null);
 </script>
 
 <template>
     <TransitionRoot as="template" :show="open">
-        <Dialog as="div" class="relative z-50" @close="emit('close')">
+        <Dialog as="div" class="relative z-50" :initialFocus="titleRef" @close="emit('close')">
             <TransitionChild as="template" enter="ease-in-out duration-500" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in-out duration-500" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
             </TransitionChild>
@@ -44,7 +96,7 @@ const statusConfig = {
                                 <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
                                     <div class="bg-night px-4 py-6 sm:px-6">
                                         <div class="flex items-center justify-between">
-                                            <DialogTitle class="text-base font-semibold leading-6 text-white">
+                                            <DialogTitle ref="titleRef" tabindex="-1" class="text-base font-semibold leading-6 text-white outline-none">
                                                 Detalles del Servicio
                                             </DialogTitle>
                                             <div class="ml-3 flex h-7 items-center">
@@ -56,67 +108,136 @@ const statusConfig = {
                                         <p class="mt-1 text-sm text-gray-300">Información del servicio asignado al cliente.</p>
                                     </div>
                                     
-                                    <div v-if="service" class="relative flex-1 px-4 py-6 sm:px-6 space-y-6">
+                                    <div v-if="service" class="relative flex-1 px-4 py-6 sm:px-6 space-y-5">
                                         
-                                        <!-- Product & Client -->
-                                        <div class="bg-gray-50 rounded-xl p-4">
-                                            <h3 class="font-semibold text-gray-900">{{ service.product?.name }}</h3>
-                                            <p class="text-sm text-gray-500 mt-1">{{ service.company?.name }}</p>
-                                            <span :class="[
-                                                'inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                                statusConfig[service.status]?.class || 'bg-gray-100 text-gray-700'
-                                            ]">
-                                                {{ statusConfig[service.status]?.label || service.status }}
-                                            </span>
+                                        <!-- Product & Client Header -->
+                                        <div class="bg-gray-700 rounded-xl p-4">
+                                            <div class="flex items-start justify-between">
+                                                <div>
+                                                    <h3 class="font-semibold text-gray-50">{{ service.product?.name }}</h3>
+                                                    <p class="text-sm text-gray-50 mt-0.5">{{ service.company?.name }}</p>
+                                                </div>
+                                                <span :class="[
+                                                    'px-2.5 py-0.5 rounded-full text-xs font-medium',
+                                                    statusConfig[service.status]?.class || 'bg-gray-100 text-gray-700'
+                                                ]">
+                                                    {{ statusConfig[service.status]?.label || service.status }}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <!-- Price & Dates -->
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div class="bg-white border border-gray-200 rounded-xl p-4">
-                                                <div class="flex items-center gap-2 text-gray-500 mb-1">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="bg-white border border-gray-200 rounded-xl p-3">
+                                                <div class="flex items-center gap-1.5 text-gray-400 mb-1">
                                                     <CurrencyDollarIcon class="h-4 w-4" />
                                                     <span class="text-xs uppercase font-medium">Precio</span>
                                                 </div>
-                                                <p class="text-sm font-bold text-gray-900">
+                                                <p class="text-sm font-semibold text-gray-900">
                                                     {{ formatCurrency(service.custom_price || service.product?.base_price) }}
                                                 </p>
-                                                <p v-if="service.custom_price" class="text-xs text-green-600">Precio especial</p>
+                                                <p v-if="service.custom_price" class="text-xs text-brand">Especial</p>
                                             </div>
-                                            <div class="bg-white border border-gray-200 rounded-xl p-4">
-                                                <div class="flex items-center gap-2 text-gray-500 mb-1">
+                                            <div class="bg-white border border-gray-200 rounded-xl p-3">
+                                                <div class="flex items-center gap-1.5 text-gray-400 mb-1">
                                                     <CalendarDaysIcon class="h-4 w-4" />
-                                                    <span class="text-xs uppercase font-medium">Vencimiento</span>
+                                                    <span class="text-xs uppercase font-medium">Vence</span>
                                                 </div>
                                                 <p :class="[
-                                                    'text-sm font-bold',
+                                                    'text-sm font-semibold',
                                                     service.end_date && new Date(service.end_date) < new Date() ? 'text-red-600' : 'text-gray-900'
                                                 ]">
                                                     {{ formatDate(service.end_date) }}
                                                 </p>
-                                                <p class="text-xs text-gray-500">Inicio: {{ formatDate(service.start_date) }}</p>
+                                                <p class="text-xs text-gray-400">Desde {{ formatDate(service.start_date) }}</p>
                                             </div>
                                         </div>
 
                                         <!-- Credentials -->
-                                        <div v-if="service.credentials" class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                            <div class="flex items-center gap-2 text-brand mb-3">
-                                                <span class="text-sm text-gray-900 font-semibold uppercase">Credenciales de Acceso</span>
+                                        <div v-if="hasCredentials" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                                <div class="flex items-center gap-2">
+                                                    <KeyIcon class="h-4 w-4 text-gray-500" />
+                                                    <span class="text-sm font-medium text-gray-700">Credenciales de Acceso</span>
+                                                </div>
                                             </div>
-                                            <pre class="text-xs text-gray-900 font-mono whitespace-pre-wrap bg-white/50 rounded-lg p-3">{{ service.credentials }}</pre>
+                                            
+                                            <div class="divide-y divide-gray-100">
+                                                <!-- Panel URL -->
+                                                <div v-if="parsedCredentials?.panel_url" class="px-4 py-3 flex items-center justify-between gap-3">
+                                                    <div class="flex items-center gap-3 min-w-0">
+                                                        <LinkIcon class="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                                        <div class="min-w-0">
+                                                            <p class="text-xs text-gray-400 uppercase">Panel</p>
+                                                            <a :href="parsedCredentials.panel_url" target="_blank" class="text-sm text-brand hover:underline truncate block">
+                                                                {{ parsedCredentials.panel_url }}
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <button @click="copyToClipboard(parsedCredentials.panel_url, 'panel')" class="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+                                                        <CheckIcon v-if="copiedField === 'panel'" class="h-4 w-4 text-green-500" />
+                                                        <ClipboardDocumentIcon v-else class="h-4 w-4" />
+                                                    </button>
+                                                </div>
+
+                                                <!-- Username -->
+                                                <div v-if="parsedCredentials?.username" class="px-4 py-3 flex items-center justify-between gap-3">
+                                                    <div class="flex items-center gap-3">
+                                                        <UserIcon class="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                                        <div>
+                                                            <p class="text-xs text-gray-400 uppercase">Usuario</p>
+                                                            <p class="text-sm text-gray-900 font-mono">{{ parsedCredentials.username }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button @click="copyToClipboard(parsedCredentials.username, 'user')" class="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+                                                        <CheckIcon v-if="copiedField === 'user'" class="h-4 w-4 text-green-500" />
+                                                        <ClipboardDocumentIcon v-else class="h-4 w-4" />
+                                                    </button>
+                                                </div>
+
+                                                <!-- Password -->
+                                                <div v-if="parsedCredentials?.password" class="px-4 py-3 flex items-center justify-between gap-3">
+                                                    <div class="flex items-center gap-3">
+                                                        <LockClosedIcon class="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                                        <div>
+                                                            <p class="text-xs text-gray-400 uppercase">Contraseña</p>
+                                                            <p class="text-sm text-gray-900 font-mono">
+                                                                {{ showPassword ? parsedCredentials.password : '••••••••' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-1">
+                                                        <button @click="showPassword = !showPassword" class="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+                                                            <EyeSlashIcon v-if="showPassword" class="h-4 w-4" />
+                                                            <EyeIcon v-else class="h-4 w-4" />
+                                                        </button>
+                                                        <button @click="copyToClipboard(parsedCredentials.password, 'pass')" class="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+                                                            <CheckIcon v-if="copiedField === 'pass'" class="h-4 w-4 text-green-500" />
+                                                            <ClipboardDocumentIcon v-else class="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Extra Info -->
+                                                <div v-if="parsedCredentials?.extra" class="px-4 py-3">
+                                                    <p class="text-xs text-gray-400 uppercase mb-1">Información Adicional</p>
+                                                    <pre class="text-sm text-gray-700 font-mono whitespace-pre-wrap">{{ parsedCredentials.extra }}</pre>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- Notes (only for admin) -->
-                                        <div v-if="service.notes" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                                            <div class="flex items-center gap-2 text-yellow-700 mb-2">
+                                        <div v-if="service.notes" class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                            <div class="flex items-center gap-2 text-amber-700 mb-2">
                                                 <DocumentTextIcon class="h-4 w-4" />
-                                                <span class="text-xs font-semibold uppercase">Notas Internas</span>
+                                                <span class="text-xs font-medium uppercase">Notas Internas</span>
                                             </div>
                                             <p class="text-sm text-gray-700">{{ service.notes }}</p>
                                         </div>
 
                                     </div>
                                     
-                                    <div class="flex flex-shrink-0 justify-end px-4 py-4 gap-3 border-t">
+                                    <div class="flex flex-shrink-0 justify-end px-4 py-4 gap-3 border-t border-gray-200">
                                         <SecondaryButton @click="emit('close')">Cerrar</SecondaryButton>
                                         <PrimaryButton @click="emit('edit', service)" class="flex items-center gap-2">
                                             <PencilSquareIcon class="h-4 w-4" />

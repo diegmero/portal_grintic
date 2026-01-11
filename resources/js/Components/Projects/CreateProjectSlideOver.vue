@@ -10,6 +10,7 @@ import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import CustomSelect from '@/Components/CustomSelect.vue';
+import CustomDatePicker from '@/Components/CustomDatePicker.vue';
 
 const props = defineProps({
     open: Boolean,
@@ -128,12 +129,22 @@ const submit = () => {
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <InputLabel for="start_date" value="Fecha Inicio" />
-                                                    <TextInput id="start_date" v-model="form.start_date" type="date" class="mt-1 block w-full" />
+                                                    <CustomDatePicker 
+                                                        id="start_date" 
+                                                        v-model="form.start_date" 
+                                                        placeholder="Seleccionar..." 
+                                                        class="mt-1"
+                                                    />
                                                     <InputError :message="form.errors.start_date" class="mt-2" />
                                                 </div>
                                                 <div>
                                                     <InputLabel for="due_date" value="Fecha Entrega" />
-                                                    <TextInput id="due_date" v-model="form.due_date" type="date" class="mt-1 block w-full" />
+                                                    <CustomDatePicker 
+                                                        id="due_date" 
+                                                        v-model="form.due_date" 
+                                                        placeholder="Sin fecha" 
+                                                        class="mt-1"
+                                                    />
                                                     <InputError :message="form.errors.due_date" class="mt-2" />
                                                 </div>
                                             </div>

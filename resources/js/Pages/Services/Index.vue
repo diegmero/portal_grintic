@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { 
     PlusIcon, 
     PencilSquareIcon,
@@ -64,12 +64,16 @@ const openDetail = (service) => {
 
 const closeCreate = () => {
     showCreateSlideOver.value = false;
-    editingService.value = null;
+    setTimeout(() => {
+        editingService.value = null;
+    }, 500); // Wait for transition
 };
 
 const closeDetail = () => {
     showDetailSlideOver.value = false;
-    viewingService.value = null;
+    setTimeout(() => {
+        viewingService.value = null;
+    }, 500); // Wait for transition
 };
 
 const deleteService = (service) => {

@@ -12,13 +12,17 @@ import {
 } from '@heroicons/vue/24/outline';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomSelect from '@/Components/CustomSelect.vue';
+import CreateInvoiceSlideOver from '@/Components/Finance/CreateInvoiceSlideOver.vue';
 
 const props = defineProps({
     invoices: Array,
     companies: Array,
+    projects: Array,
     filters: Object,
     stats: Object,
 });
+
+const showCreateSlideOver = ref(false);
 
 // Config
 const statusConfig = {
@@ -66,10 +70,10 @@ watch(filterForm, (val) => {
                     <p class="text-sm text-gray-500 mt-1">Gestión de facturación, cobros y saldos.</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <Link :href="route('invoices.create')" class="inline-flex items-center gap-2 rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700">
+                    <button @click="showCreateSlideOver = true" class="inline-flex items-center gap-2 rounded-md border border-transparent bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-800">
                         <PlusIcon class="h-5 w-5" />
                         Nueva Factura
-                    </Link>
+                    </button>
                 </div>
             </div>
         </template>
@@ -203,17 +207,25 @@ watch(filterForm, (val) => {
                         <h3 class="text-lg font-semibold text-gray-900">No hay facturas</h3>
                         <p class="mt-1 text-sm text-gray-500">Registra tu primera factura para comenzar el seguimiento.</p>
                         <div class="mt-6">
-                            <Link :href="route('invoices.create')">
-                                <PrimaryButton>
-                                    <PlusIcon class="-ml-1 mr-2 h-5 w-5" />
-                                    Nueva Factura
-                                </PrimaryButton>
-                            </Link>
+                            <PrimaryButton @click="showCreateSlideOver = true">
+                                <PlusIcon class="-ml-1 mr-2 h-5 w-5" />
+                                Nueva Factura
+                            </PrimaryButton>
                         </div>
                     </div>
                 </div>
 
             </div>
-        </div>
+            </div>
+
+
+        <!-- Create Invoice SlideOver -->
+        <CreateInvoiceSlideOver
+            :open="showCreateSlideOver"
+            :companies="companies"
+            :projects="projects"
+            @close="showCreateSlideOver = false"
+        />
+
     </AuthenticatedLayout>
 </template>

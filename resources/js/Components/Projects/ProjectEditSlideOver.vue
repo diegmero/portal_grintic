@@ -9,6 +9,7 @@ import {
     ArrowUpTrayIcon 
 } from '@heroicons/vue/24/outline';
 import CustomSelect from '@/Components/CustomSelect.vue';
+import CustomDatePicker from '@/Components/CustomDatePicker.vue';
 
 const props = defineProps({
     show: Boolean,
@@ -136,7 +137,7 @@ const statusOptions = [
             <div v-show="show" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$emit('close')"></div>
         </Transition>
 
-        <div class="fixed inset-0 overflow-hidden pointer-events-none" v-show="show">
+        <div class="fixed inset-0 overflow-hidden pointer-events-none">
             <div class="absolute inset-0 overflow-hidden">
                 <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
                     <Transition
@@ -178,11 +179,19 @@ const statusOptions = [
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-900">Fecha Inicio</label>
-                                                <input v-model="form.start_date" type="date" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" />
+                                                <CustomDatePicker 
+                                                    v-model="form.start_date" 
+                                                    placeholder="Seleccionar..." 
+                                                    class="mt-1"
+                                                />
                                             </div>
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-900">Fecha Entrega</label>
-                                                <input v-model="form.end_date" type="date" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" />
+                                                <CustomDatePicker 
+                                                    v-model="form.end_date" 
+                                                    placeholder="Sin fecha" 
+                                                    class="mt-1"
+                                                />
                                             </div>
                                         </div>
 
