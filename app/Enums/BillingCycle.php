@@ -13,7 +13,7 @@ enum BillingCycle: string
         return match($this) {
             self::MONTHLY => 'Mensual',
             self::ANNUAL => 'Anual',
-            self::LIFETIME => 'De por vida',
+            self::LIFETIME => 'Pago Único',
         };
     }
 }

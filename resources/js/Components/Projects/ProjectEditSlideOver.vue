@@ -56,17 +56,31 @@ const formatDateForInput = (dateString) => {
     return dateString.substring(0, 10);
 };
 
-watch(() => props.project?.id, (newId) => {
-    const val = props.project;
-    if (val && newId) {
-        form.name = val.name;
-        form.status = val.status;
-        form.start_date = val.start_date ? formatDateForInput(val.start_date) : '';
-        form.end_date = val.end_date ? formatDateForInput(val.end_date) : '';
-        form.description = val.description;
-        form.price = val.price || '';
+const fillForm = () => {
+    if (props.project) {
+        form.name = props.project.name || '';
+        form.status = props.project.status || 'active';
+        form.start_date = props.project.start_date ? formatDateForInput(props.project.start_date) : '';
+        form.end_date = props.project.end_date ? formatDateForInput(props.project.end_date) : '';
+        form.description = props.project.description || '';
+        form.price = props.project.price || '';
     }
-}, { immediate: true });
+};
+
+watch(() => props.show, (isOpen) => {
+    if (isOpen) {
+        // Small delay to let the slide-over animation start first
+        setTimeout(() => {
+            fillForm();
+        }, 100);
+    } else {
+        // Wait for the closing animation to finish before resetting
+        setTimeout(() => {
+            form.reset();
+            form.files = []; 
+        }, 500);
+    }
+});
 
 const submit = () => {
     form.put(route('projects.update', props.project.id), {

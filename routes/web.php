@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', \App\Http\Controllers\ProductController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // Client Services
+    Route::get('/clients/{client}/active-services', [\App\Http\Controllers\ClientServiceController::class, 'getActiveServices'])->name('clients.services.active');
     Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
 });
 

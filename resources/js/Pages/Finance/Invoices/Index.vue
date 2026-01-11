@@ -153,7 +153,7 @@ watch(filterForm, (val) => {
                                 <tr>
                                     <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Factura</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fecha</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cliente / Proyecto</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Cliente</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
                                     <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Total</th>
                                     <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Saldo</th>
@@ -173,6 +173,9 @@ watch(filterForm, (val) => {
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         <div class="font-medium">{{ invoice.company?.name }}</div>
                                         <div class="text-xs text-gray-500" v-if="invoice.project">{{ invoice.project.name }}</div>
+                                        <div class="text-xs text-gray-500 max-w-[200px] truncate" v-else-if="invoice.items?.length > 0">
+                                            {{ invoice.items[0].description }} <span v-if="invoice.items.length > 1">(+{{ invoice.items.length - 1 }})</span>
+                                        </div>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         <span :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', statusConfig[invoice.status]?.class || 'bg-gray-100 text-gray-800']">

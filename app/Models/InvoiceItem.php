@@ -17,6 +17,7 @@ class InvoiceItem extends Model
         'quantity',
         'price',
         'total',
+        'client_service_id',
     ];
 
     protected $casts = [
@@ -27,5 +28,10 @@ class InvoiceItem extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function clientService()
+    {
+        return $this->belongsTo(ClientService::class);
     }
 }

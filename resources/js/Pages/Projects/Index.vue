@@ -215,7 +215,11 @@ const filteredProjects = computed(() => {
 
         </div>
 
-        <CreateProjectSlideOver :open="showCreateSlideOver" :companies="companies" @close="showCreateSlideOver = false" />
+        <CreateProjectSlideOver 
+            :open="showCreateSlideOver" 
+            :companies="companies" 
+            @close="showCreateSlideOver = false" 
+        />
 
     </AuthenticatedLayout>
 </template>

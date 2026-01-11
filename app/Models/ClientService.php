@@ -35,6 +35,11 @@ class ClientService extends Model
         ];
     }
 
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
     /**
      * Encrypt credentials when storing
      */

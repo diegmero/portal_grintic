@@ -56,44 +56,52 @@ const normalizeDate = (dateStr) => {
 };
 
 // Form Population Logic
-watch(() => props.service, (service) => {
-    if (service) {
-        form.company_id = service.company_id;
-        form.product_id = service.product_id;
-        form.custom_price = service.custom_price || '';
-        form.start_date = normalizeDate(service.start_date);
-        form.end_date = normalizeDate(service.end_date);
-        form.status = service.status;
-        
-        // Parse credentials - handle both string and object
-        if (service.credentials) {
-            if (typeof service.credentials === 'string') {
-                try {
-                    const parsed = JSON.parse(service.credentials);
-                    form.credentials = { panel_url: '', username: '', password: '', extra: '', ...parsed };
-                } catch {
-                    form.credentials = { panel_url: '', username: '', password: '', extra: service.credentials };
+// Consolidated Deferred Watcher
+watch(() => props.open, (isOpen) => {
+    if (isOpen) {
+        // Defer loading to let animation start
+        setTimeout(() => {
+            if (props.service) {
+                // Edit Mode
+                const service = props.service;
+                form.company_id = service.company_id;
+                form.product_id = service.product_id;
+                form.custom_price = service.custom_price || '';
+                form.start_date = normalizeDate(service.start_date);
+                form.end_date = normalizeDate(service.end_date);
+                form.status = service.status;
+                
+                // Parse credentials
+                if (service.credentials) {
+                    if (typeof service.credentials === 'string') {
+                        try {
+                            const parsed = JSON.parse(service.credentials);
+                            form.credentials = { panel_url: '', username: '', password: '', extra: '', ...parsed };
+                        } catch {
+                            form.credentials = { panel_url: '', username: '', password: '', extra: service.credentials };
+                        }
+                    } else {
+                        form.credentials = { panel_url: '', username: '', password: '', extra: '', ...service.credentials };
+                    }
+                } else {
+                    form.credentials = { panel_url: '', username: '', password: '', extra: '' };
                 }
+                form.notes = service.notes || '';
+                showPassword.value = false;
             } else {
-                form.credentials = { panel_url: '', username: '', password: '', extra: '', ...service.credentials };
+                // Create Mode
+                form.reset();
+                form.start_date = new Date().toISOString().split('T')[0];
+                form.status = 'active';
+                form.credentials = { panel_url: '', username: '', password: '', extra: '' };
+                showPassword.value = false;
             }
-        } else {
-            form.credentials = { panel_url: '', username: '', password: '', extra: '' };
-        }
-        form.notes = service.notes || '';
-        showPassword.value = false;
-    }
-}, { immediate: true });
-
-// Reset on Create
-watch(() => props.open, (open) => {
-    if (open && !props.service) {
-        // Create mode - reset form
-        form.reset();
-        form.start_date = new Date().toISOString().split('T')[0];
-        form.status = 'active';
-        form.credentials = { panel_url: '', username: '', password: '', extra: '' };
-        showPassword.value = false;
+        }, 100);
+    } else {
+        // Defer Cleanup
+        setTimeout(() => {
+            form.reset();
+        }, 500);
     }
 });
 

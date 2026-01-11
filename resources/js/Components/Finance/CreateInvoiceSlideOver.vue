@@ -33,9 +33,7 @@ const addItem = () => {
 };
 
 const removeItem = (index) => {
-    if (form.items.length > 1) {
-        form.items.splice(index, 1);
-    }
+    form.items.splice(index, 1);
 };
 
 const subtotal = computed(() => {
@@ -52,6 +50,114 @@ watch(() => form.project_id, (newVal) => {
     }
 });
 
+// Fetch active services when company changes
+const clientServices = ref([]);
+const isLoadingServices = ref(false);
+const selectedServiceStart = ref(''); // Control for CustomSelect
+
+const serviceOptions = computed(() => {
+    // Group 1: Billable
+    const available = clientServices.value.filter(s => s.is_billable).map(s => ({
+        value: s.id,
+        label: `✅ ${s.product.name} - ${formatCurrency(s.custom_price || s.product.base_price)}`
+    }));
+
+    // Group 2: Non-Billable (Disabled/Info)
+    const unavailable = clientServices.value.filter(s => !s.is_billable).map(s => ({
+        value: s.id,
+        label: `🚫 ${s.product.name} (${s.status_message})`,
+        disabled: true // CustomSelect needs to handle this, or we just rely on visual cue
+    }));
+
+    return [
+        { value: '', label: 'Seleccionar servicio para agregar...' },
+        ...available,
+        ...(unavailable.length > 0 ? [{ value: 'disabled_sep', label: '--- No Disponibles ---', disabled: true }] : []),
+        ...unavailable
+    ];
+});
+
+const filteredProjects = computed(() => {
+    if (!form.company_id) return props.projects;
+    return props.projects.filter(p => p.company_id === form.company_id);
+});
+
+const projectOptions = computed(() => {
+    return [
+        { value: '', label: 'Sin Proyecto' },
+        ...filteredProjects.value.map(p => ({ value: p.id, label: p.name }))
+    ];
+});
+
+watch(() => form.company_id, async (newVal) => {
+    clientServices.value = []; // Clear previous
+    
+    // Validate current project selection
+    if (form.project_id) {
+        const currentProject = props.projects.find(p => p.id === form.project_id);
+        if (currentProject && currentProject.company_id !== newVal) {
+            form.project_id = ''; // Reset if project doesn't belong to new company
+        }
+    }
+
+    if (newVal) {
+        isLoadingServices.value = true;
+        try {
+            const response = await axios.get(route('clients.services.active', newVal));
+            clientServices.value = response.data;
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        } finally {
+            isLoadingServices.value = false;
+        }
+    }
+});
+
+// Add service to items
+const onServiceSelect = (serviceId) => {
+    if (!serviceId || serviceId === 'disabled_sep') return;
+    
+    // Check if billable check was bypassed
+    const service = clientServices.value.find(s => s.id === serviceId);
+    if (service && !service.is_billable) {
+        alert(service.status_message); // Prevent selection if somehow selected
+        selectedServiceStart.value = '';
+        return;
+    }
+
+    // Check for duplicates
+    if (form.items.some(item => item.client_service_id === serviceId)) {
+        alert('Este servicio ya está agregado a la factura.');
+        selectedServiceStart.value = '';
+        return;
+    }
+    
+    addServiceToInvoice(serviceId);
+    
+    // Reset selector on next tick to allow UI update if needed, though CustomSelect might need null
+    setTimeout(() => {
+        selectedServiceStart.value = '';
+    }, 100);
+};
+
+const addServiceToInvoice = (serviceId) => {
+    const service = clientServices.value.find(s => s.id === serviceId);
+    if (!service) return;
+
+    // Remove empty initial item if it exists and is the only one
+    if (form.items.length === 1 && !form.items[0].description && form.items[0].price === 0) {
+        form.items.pop();
+    }
+
+    form.items.push({
+        description: service.product.name + (service.notes ? ` - ${service.notes}` : ''),
+        quantity: 1,
+        price: service.custom_price || service.product.base_price,
+        client_service_id: service.id,
+    });
+};
+
+
 // Reset on Open
 watch(() => props.open, (isOpen) => {
     if (isOpen) {
@@ -62,10 +168,23 @@ watch(() => props.open, (isOpen) => {
         d.setDate(d.getDate() + 30);
         form.due_date = d.toISOString().split('T')[0];
         form.items = [{ description: '', quantity: 1, price: 0 }];
+        // Reset services list
+        clientServices.value = [];
     }
 });
 
 const submit = () => {
+    if (form.items.length === 0) {
+        form.setError('items', 'Debes agregar al menos un item a la factura.');
+        return;
+    }
+    
+    if (subtotal.value <= 0) {
+         if (!confirm('El total de la factura es $0.00. ¿Deseas continuar?')) {
+            return;
+         }
+    }
+
     form.post(route('invoices.store'), {
         onSuccess: () => {
             emit('close');
@@ -139,9 +258,10 @@ const formatCurrency = (amount) => {
                                             <InputLabel for="project_id" value="Proyecto (Opcional)" />
                                             <CustomSelect
                                                 v-model="form.project_id"
-                                                :options="[{ value: '', label: 'Sin Proyecto' }, ...projects.map(p => ({ value: p.id, label: p.name }))]"
+                                                :options="projectOptions"
                                                 placeholder="Sin Proyecto"
                                                 class="mt-1"
+                                                :disabled="!form.company_id && filteredProjects.length === 0"
                                             />
                                             <InputError :message="form.errors.project_id" class="mt-2" />
                                         </div>
@@ -179,6 +299,30 @@ const formatCurrency = (amount) => {
                                             </button>
                                         </div>
                                         
+                                        <!-- Import Service Dropdown -->
+                                        <div v-if="clientServices.length > 0" class="mb-5 bg-blue-50/50 border border-blue-100 rounded-xl p-4">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                                                    Importar Servicio Activo
+                                                </label>
+                                                <div v-if="isLoadingServices" class="flex items-center gap-1 text-xs text-blue-500">
+                                                    <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    <span>Cargando...</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <CustomSelect
+                                                :model-value="selectedServiceStart" 
+                                                @update:model-value="onServiceSelect"
+                                                :options="serviceOptions"
+                                                placeholder="Seleccionar servicio para agregar..."
+                                                class="w-full"
+                                            />
+                                        </div>
+
                                         <InputError :message="form.errors.items" class="mb-4" />
 
                                         <div class="space-y-4">

@@ -97,6 +97,28 @@ const statusConfig = {
     cancelled: { label: 'Cancelado', class: 'bg-gray-100 text-gray-500' },
     suspended: { label: 'Suspendido', class: 'bg-yellow-100 text-yellow-700' },
 };
+
+const getInvoiceStatusClass = (status) => {
+    switch (status) {
+        case 'paid': return 'text-green-600';
+        case 'partial': return 'text-yellow-600';
+        case 'overdue': return 'text-red-600';
+        case 'sent': return 'text-blue-600';
+        default: return 'text-gray-500';
+    }
+};
+
+const translateInvoiceStatus = (status) => {
+    const map = {
+        'paid': 'Pagado',
+        'partial': 'Parcial',
+        'overdue': 'Vencido',
+        'sent': 'Enviado',
+        'draft': 'Borrador',
+        'cancelled': 'Cancelado'
+    };
+    return map[status] || status;
+};
 </script>
 
 <template>
@@ -167,6 +189,7 @@ const statusConfig = {
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vence</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Pago</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
@@ -204,6 +227,20 @@ const statusConfig = {
                                         ]">
                                             {{ statusConfig[service.status]?.label || service.status }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div v-if="service.invoice_items?.length > 0 && service.invoice_items[0].invoice" class="flex flex-col">
+                                            <span :class="[
+                                                'text-xs font-medium uppercase', 
+                                                getInvoiceStatusClass(service.invoice_items[0].invoice.status)
+                                            ]">
+                                                {{ translateInvoiceStatus(service.invoice_items[0].invoice.status) }}
+                                            </span>
+                                            <span class="text-[10px] text-gray-500">
+                                                {{ formatDate(service.invoice_items[0].invoice.date) }}
+                                            </span>
+                                        </div>
+                                        <span v-else class="text-xs text-gray-400">Sin facturar</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <div class="flex items-center justify-end gap-2">

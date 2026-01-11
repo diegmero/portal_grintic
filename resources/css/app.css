@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Stabilize Global Scrollbar */
+html {
+    overflow-y: scroll;
+}
+
 /* =================================
    PRINT STYLES
    ================================= */

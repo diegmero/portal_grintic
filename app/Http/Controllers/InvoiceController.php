@@ -17,7 +17,7 @@ class InvoiceController extends Controller
     {
         $filters = $request->only(['status', 'company_id']);
         
-        $query = Invoice::with(['company', 'project'])
+        $query = Invoice::with(['company', 'project', 'items'])
             ->when($filters['status'] ?? null, function ($q, $status) {
                 $q->where('status', $status);
             })
@@ -104,6 +104,7 @@ class InvoiceController extends Controller
             'items.*.description' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
+            'items.*.client_service_id' => 'nullable|exists:client_services,id',
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -170,6 +171,7 @@ class InvoiceController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'total' => $item['quantity'] * $item['price'],
+                    'client_service_id' => $item['client_service_id'] ?? null,
                 ]);
             }
         });
