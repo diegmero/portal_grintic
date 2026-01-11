@@ -24,6 +24,7 @@ const form = useForm({
     status: 'active',
     start_date: '',
     due_date: '',
+    price: '',
 });
 
 const statuses = [
@@ -91,6 +92,20 @@ const submit = () => {
                                                     </option>
                                                 </select>
                                                 <InputError :message="form.errors.company_id" class="mt-2" />
+                                            </div>
+
+                                            <div>
+                                                <InputLabel for="price" value="Presupuesto / Valor Total" />
+                                                <div class="relative mt-1 rounded-md shadow-sm">
+                                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                        <span class="text-gray-500 sm:text-sm">$</span>
+                                                    </div>
+                                                    <TextInput id="price" v-model="form.price" type="number" step="0.01" class="block w-full pl-7 pr-12" placeholder="0.00" />
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                        <span class="text-gray-500 sm:text-sm">USD</span>
+                                                    </div>
+                                                </div>
+                                                <InputError :message="form.errors.price" class="mt-2" />
                                             </div>
 
                                             <div>

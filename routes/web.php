@@ -19,6 +19,8 @@ Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'ind
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+    // Finance Routes moved inside auth group
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -58,9 +60,15 @@ Route::middleware('auth')->group(function () {
     // Comments
     Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
 
-    Route::get('/finance', [\App\Http\Controllers\FinanceController::class, 'index'])->name('finance.index');
-    Route::post('/proposals/{proposal}/convert', [\App\Http\Controllers\FinanceController::class, 'convertProposal'])->name('proposals.convert');
-    Route::post('/invoices/{invoice}/payments', [\App\Http\Controllers\FinanceController::class, 'storePayment'])->name('payments.store');
+    // Project Additionals
+    Route::post('/projects/{project}/additionals', [\App\Http\Controllers\ProjectAdditionalController::class, 'store'])->name('project-additionals.store');
+    Route::delete('/project-additionals/{additional}', [\App\Http\Controllers\ProjectAdditionalController::class, 'destroy'])->name('project-additionals.destroy');
+
+    Route::get('/finance', [\App\Http\Controllers\InvoiceController::class, 'index'])->name('finance.index'); // Alias for consistent sidebar link if needed, or just redirect.
+    // Better: We corrected sidebar to use invoices.index. So we can remove finance.index logic or keep for legacy.
+    
+    Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+    Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
 });
 
 require __DIR__.'/auth.php';

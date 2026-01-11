@@ -13,7 +13,9 @@ import {
     PaperClipIcon,
     ArrowUpTrayIcon,
     ArrowDownTrayIcon,
-    ClipboardDocumentListIcon
+    ClipboardDocumentListIcon,
+    DocumentCurrencyDollarIcon,
+    EyeIcon
 } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/vue/24/solid';
 import CommentsSection from '@/Components/Comments/CommentsSection.vue';
@@ -81,6 +83,31 @@ const addStage = () => {
         onSuccess: () => { stageForm.reset(); showAddStageModal.value = false; },
         preserveScroll: true,
     });
+};
+
+// --- Project Additionals Management ---
+const showAddAdditionalModal = ref(false);
+const additionalForm = useForm({
+    description: '',
+    amount: '',
+});
+
+const addAdditional = () => {
+    additionalForm.post(route('project-additionals.store', props.project.id), {
+        onSuccess: () => {
+            additionalForm.reset();
+            showAddAdditionalModal.value = false;
+        },
+        preserveScroll: true,
+    });
+};
+
+const deleteAdditional = (id) => {
+    if (confirm('¿Eliminar este adicional?')) {
+        router.delete(route('project-additionals.destroy', id), {
+            preserveScroll: true,
+        });
+    }
 };
 
 const openEditStageModal = (stage) => {
@@ -276,9 +303,9 @@ const deleteSubtask = (subtaskId) => {
                             <div class="p-3 border-b border-gray-100">
                                 <div class="flex items-center gap-2 mb-2">
                                     <span :class="[statusConfig[project.status]?.class || 'bg-gray-500', 'w-2 h-2 rounded-full']"></span>
-                                    <span class="text-sm font-medium text-gray-700">{{ statusConfig[project.status]?.label || project.status }}</span>
+                                    <span class="text-xs font-medium text-gray-700">{{ statusConfig[project.status]?.label || project.status }}</span>
                                 </div>
-                                <div class="flex items-center justify-between text-sm text-gray-500 mb-1">
+                                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
                                     <span>Progreso</span>
                                     <span class="font-semibold text-gray-900">{{ project.progress }}%</span>
                                 </div>
@@ -288,60 +315,86 @@ const deleteSubtask = (subtaskId) => {
                             </div>
 
                             <!-- Info List -->
-                            <div class="p-3 space-y-2 text-sm">
-                                <div class="flex justify-between">
+                            <div class="p-3 space-y-1.5 border-b border-gray-100">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Cliente</span>
                                     <span class="text-gray-900 font-medium truncate max-w-[120px]">{{ project.company?.name || '—' }}</span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Inicio</span>
                                     <span class="text-gray-900">{{ formatDate(project.start_date) }}</span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Entrega</span>
                                     <span class="text-gray-900">{{ formatDate(project.due_date) }}</span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Etapas</span>
                                     <span class="text-gray-900">{{ project.stages?.length || 0 }}</span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Tareas</span>
                                     <span class="text-gray-900">{{ completedTasks }}/{{ totalTasks }}</span>
                                 </div>
                             </div>
 
-                            <!-- Project Files (Secure) -->
-                            <div class="p-3 border-t border-gray-100">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-sm font-semibold text-gray-900">Archivos del Proyecto</h4>
+                            <!-- Financial Widget -->
+                            <div v-if="project.price" class="p-3 border-b border-gray-100">
+                                <h4 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Finanzas</h4>
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-500">Contrato Base</span>
+                                        <span class="text-gray-900">${{ Number(project.price).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
+                                    <div v-if="project.additionals?.length > 0" class="flex justify-between text-xs">
+                                        <span class="text-gray-500">Adicionales ({{ project.additionals.length }})</span>
+                                        <span class="text-gray-900">${{ project.additionals.reduce((sum, a) => sum + parseFloat(a.amount), 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs pt-1.5 border-t border-gray-100 mt-1.5">
+                                        <span class="font-semibold text-gray-900">Total Proyecto</span>
+                                        <span class="font-semibold text-gray-900">${{ (Number(project.price) + (project.additionals?.reduce((sum, a) => sum + parseFloat(a.amount), 0) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
+
+                                    <div class="flex justify-between text-xs pt-1.5">
+                                        <span class="text-gray-500">Recaudado</span>
+                                        <span class="font-medium text-green-600">${{ (project.invoices?.reduce((sum, inv) => sum + (parseFloat(inv.total) - parseFloat(inv.balance_due)), 0) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-500 h-1.5 rounded-full" :style="{ width: Math.min(((project.invoices?.reduce((sum, inv) => sum + (parseFloat(inv.total) - parseFloat(inv.balance_due)), 0) || 0) / (Number(project.price) + (project.additionals?.reduce((sum, a) => sum + parseFloat(a.amount), 0) || 0))) * 100, 100) + '%' }"></div>
+                                    </div>
+                                    <div class="flex justify-between text-xs pt-1.5 border-t border-gray-100">
+                                        <span class="text-gray-500">Por Cobrar</span>
+                                        <span class="font-medium text-red-600">${{ ((Number(project.price) + (project.additionals?.reduce((sum, a) => sum + parseFloat(a.amount), 0) || 0)) - (project.invoices?.reduce((sum, inv) => sum + (parseFloat(inv.total) - parseFloat(inv.balance_due)), 0) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Additionals List (Read-Only) -->
+                            <div v-if="project.additionals?.length > 0" class="p-3 border-b border-gray-100">
+                                <h4 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Detalle Adicionales</h4>
+                                <div class="space-y-1">
+                                    <div v-for="additional in project.additionals" :key="additional.id" class="flex justify-between text-xs">
+                                        <span class="text-gray-500 truncate max-w-[140px]">{{ additional.description }}</span>
+                                        <span class="text-gray-900">${{ Number(additional.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Project Files (Secure) -->
+                            <div class="p-3">
+                                <h4 class="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-2">Archivos</h4>
                                 <div v-if="project.media && project.media.length > 0" class="space-y-1">
                                     <button 
                                         v-for="file in project.media" 
                                         :key="file.id"
                                         @click="openFilePreview(route('projects.media.show', { project: project.id, media: file.id }), file.file_name)"
-                                        class="flex items-center gap-2 text-sm text-gray-600 hover:text-brand w-full text-left truncate group px-1 py-0.5 rounded hover:bg-gray-50"
+                                        class="flex items-center gap-2 text-xs text-gray-600 hover:text-brand w-full text-left truncate group px-1 py-0.5 rounded hover:bg-gray-50"
                                     >
-                                        <PaperClipIcon class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-brand" />
+                                        <PaperClipIcon class="h-3.5 w-3.5 flex-shrink-0 text-gray-400 group-hover:text-brand" />
                                         <span class="truncate">{{ file.file_name }}</span>
                                     </button>
                                 </div>
-                                <p v-else class="text-sm text-gray-400 px-1">Sin archivos adjuntos.</p>
-                            </div>
-
-                            <!-- Description -->
-                            <div v-if="project.description" class="p-3 border-t border-gray-100">
-                                <p class="text-sm text-gray-700 font-semibold tracking-wide mb-1">Descripción</p>
-                                <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{ project.description }}</p>
-                            </div>
-
-                             <!-- Edit Button -->
-                             <div class="p-3 border-t border-gray-100">
-                                <button @click="showEditProject = true" class="w-full flex justify-center items-center gap-2 rounded-md bg-white border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
-                                    <PencilSquareIcon class="h-4 w-4 text-gray-500" />
-                                    Editar Proyecto
-                                </button>
+                                <p v-else class="text-xs text-gray-400">Sin archivos adjuntos.</p>
                             </div>
                         </div>
                     </div>
@@ -354,10 +407,72 @@ const deleteSubtask = (subtaskId) => {
                                 <ClipboardDocumentListIcon class="h-5 w-5 text-gray-400" />
                                 Etapas del Proyecto
                             </h2>
-                            <button @click="showAddStageModal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand/90 rounded-lg transition-colors">
-                                <PlusIcon class="h-4 w-4" />
-                                Nueva Etapa
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button 
+                                    @click="showEditProject = true"
+                                    class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                >
+                                    <PencilSquareIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    Editar Proyecto
+                                </button>
+                                
+                                <!-- Invoices Section -->
+                                <div class="flex items-center gap-2">
+                                    <!-- CASE: Multiple Invoices (List) -->
+                                    <template v-if="project.invoices && project.invoices.length > 1">
+                                        <div class="flex -space-x-2 overflow-hidden mr-2">
+                                            <Link 
+                                                v-for="(inv, index) in project.invoices" 
+                                                :key="inv.id"
+                                                :href="route('invoices.show', inv.id)"
+                                                class="inline-flex items-center justify-center px-2 h-8 rounded-full bg-white ring-2 ring-gray-100 hover:ring-brand hover:z-10 transition-all text-xs font-bold text-gray-700 shadow-sm"
+                                                :title="inv.number"
+                                            >
+                                                #{{ index + 1 }}
+                                            </Link>
+                                        </div>
+                                    </template>
+
+                                    <!-- CASE: Single Invoice (Big Button) -->
+                                    <Link 
+                                        v-else-if="project.invoices && project.invoices.length === 1"
+                                        :href="route('invoices.show', project.invoices[0].id)"
+                                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <EyeIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+                                        Ver Factura
+                                    </Link>
+
+                                    <!-- CASE: No Invoices (Create Button) -->
+                                    <Link 
+                                        v-else-if="!project.invoices || project.invoices.length === 0"
+                                        :href="route('invoices.create', { project_id: project.id })"
+                                        class="inline-flex items-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand transition-colors"
+                                    >
+                                        <DocumentCurrencyDollarIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-white" aria-hidden="true" />
+                                        Crear Factura
+                                    </Link>
+
+                                    <!-- CASE: Has invoices but remaining balance to bill (independent check) -->
+                                    <Link 
+                                        v-if="project.invoices?.length > 0 && ((Number(project.price) + (project.additionals?.reduce((sum, a) => sum + parseFloat(a.amount), 0) || 0)) - (project.invoices?.reduce((sum, inv) => sum + parseFloat(inv.total), 0) || 0)) > 0.1"
+                                        :href="route('invoices.create', { project_id: project.id })"
+                                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand shadow-sm ring-1 ring-inset ring-brand hover:bg-gray-50 transition-colors"
+                                        title="Crear Factura por el saldo restante"
+                                    >
+                                        <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-brand" aria-hidden="true" />
+                                        Facturar Excedente
+                                    </Link>
+                                </div>
+
+                                <button 
+                                    @click="showAddStageModal = true"
+                                    class="inline-flex items-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                >
+                                    <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+                                    Nueva Etapa
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Stages -->
@@ -545,6 +660,35 @@ const deleteSubtask = (subtaskId) => {
             @close="showEditProject = false"
             @preview-file="(file) => openFilePreview(route('projects.media.show', { project: project.id, media: file.id }), file.file_name)"
         />
+
+        <!-- Add Additional Modal -->
+        <Modal :show="showAddAdditionalModal" @close="showAddAdditionalModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Agregar Adicional</h2>
+                <form @submit.prevent="addAdditional" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Descripción</label>
+                        <input type="text" v-model="additionalForm.description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm" placeholder="Ej: Revisiones adicionales de diseño..." required />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Monto</label>
+                        <div class="relative mt-1 rounded-md shadow-sm">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span class="text-gray-500 sm:text-sm">$</span>
+                            </div>
+                            <input type="number" step="0.01" v-model="additionalForm.amount" class="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-brand focus:ring-brand sm:text-sm" placeholder="0.00" required />
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span class="text-gray-500 sm:text-sm">USD</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <SecondaryButton @click="showAddAdditionalModal = false">Cancelar</SecondaryButton>
+                        <PrimaryButton type="submit" :disabled="additionalForm.processing">Agregar Adicional</PrimaryButton>
+                    </div>
+                </form>
+            </div>
+        </Modal>
 
     </AuthenticatedLayout>
 </template>

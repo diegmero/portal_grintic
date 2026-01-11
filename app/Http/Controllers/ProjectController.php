@@ -30,6 +30,8 @@ class ProjectController extends Controller
                 'stages.tasks.media',
                 'stages.media',
                 'media',
+                'invoices',
+                'additionals', 
             ]),
         ]);
     }
@@ -70,9 +72,11 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:active,on_hold,completed,cancelled',
+            'status' => ['required', 'string'],
             'start_date' => 'nullable|date',
-            'due_date' => 'nullable|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'price' => 'nullable|numeric|min:0',
+            'additional_price' => 'nullable|numeric|min:0',
         ]);
 
         $project->update($validated);

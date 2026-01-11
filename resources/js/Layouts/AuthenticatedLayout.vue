@@ -30,7 +30,7 @@ const navigation = computed(() => {
     }
 
     nav.push({ name: isClient.value ? 'Mis Proyectos' : 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') });
-    nav.push({ name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: route('finance.index'), icon: CurrencyDollarIcon, current: route().current('finance.*') });
+    nav.push({ name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: route('invoices.index'), icon: CurrencyDollarIcon, current: route().current('invoices.*') });
 
     return nav;
 });

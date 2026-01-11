@@ -21,21 +21,48 @@ const form = useForm({
     description: '',
     status: 'active',
     start_date: '',
-    due_date: '',
+    end_date: '',
+    price: '',
+    files: []
 });
+
+// Additionals Management
+const additionalForm = useForm({
+    description: '',
+    amount: '',
+});
+
+const addAdditional = () => {
+    additionalForm.post(route('project-additionals.store', props.project.id), {
+        onSuccess: () => {
+            additionalForm.reset();
+        },
+        preserveScroll: true,
+    });
+};
+
+const deleteAdditional = (id) => {
+    if (confirm('¿Eliminar este adicional?')) {
+        router.delete(route('project-additionals.destroy', id), {
+            preserveScroll: true,
+        });
+    }
+};
 
 const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     return dateString.substring(0, 10);
 };
 
-watch(() => props.project, (val) => {
-    if (val) {
+watch(() => props.project?.id, (newId) => {
+    const val = props.project;
+    if (val && newId) {
         form.name = val.name;
-        form.description = val.description;
         form.status = val.status;
         form.start_date = val.start_date ? formatDateForInput(val.start_date) : '';
-        form.due_date = val.due_date ? formatDateForInput(val.due_date) : '';
+        form.end_date = val.end_date ? formatDateForInput(val.end_date) : '';
+        form.description = val.description;
+        form.price = val.price || '';
     }
 }, { immediate: true });
 
@@ -140,13 +167,13 @@ const statusOptions = [
                                             <input v-model="form.name" type="text" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" required />
                                         </div>
 
+                                        <!-- Descripción -->
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-900">Estado</label>
-                                            <select v-model="form.status" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6">
-                                                <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                                            </select>
+                                            <label class="block text-sm font-medium text-gray-900">Descripción / Acta</label>
+                                            <textarea v-model="form.description" rows="6" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" placeholder="Detalles, acta de entrega, etc..."></textarea>
                                         </div>
 
+                                        <!-- Fechas de inicio y fin -->
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-900">Fecha Inicio</label>
@@ -154,13 +181,28 @@ const statusOptions = [
                                             </div>
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-900">Fecha Entrega</label>
-                                                <input v-model="form.due_date" type="date" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" />
+                                                <input v-model="form.end_date" type="date" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-900">Descripción / Acta</label>
-                                            <textarea v-model="form.description" rows="6" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" placeholder="Detalles, acta de entrega, etc..."></textarea>
+                                            <label class="block text-sm font-medium text-gray-900">Estado</label>
+                                            <select v-model="form.status" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6">
+                                                <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-900">Presupuesto / Valor Total</label>
+                                            <div class="relative mt-1 rounded-md shadow-sm">
+                                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                    <span class="text-gray-500 sm:text-sm">$</span>
+                                                </div>
+                                                <input v-model="form.price" type="number" step="0.01" class="block w-full rounded-md border-0 py-1.5 pl-7 pr-12 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" placeholder="0.00" />
+                                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <span class="text-gray-500 sm:text-sm">USD</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="flex justify-end">
@@ -205,6 +247,37 @@ const statusOptions = [
                                         </ul>
                                         <p v-else class="text-sm text-gray-500 text-center italic">No hay archivos adjuntos.</p>
                                     </div>
+                                    <!-- Additionals Management Section -->
+                                        <div class="border rounded-lg p-3 bg-gray-50">
+                                            <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">Adicionales / Excedentes</label>
+                                            
+                                            <!-- List existing additionals -->
+                                            <div v-if="project.additionals?.length > 0" class="space-y-2 mb-3">
+                                                <div v-for="additional in project.additionals" :key="additional.id" class="flex justify-between items-center bg-white p-2 rounded border text-sm group">
+                                                    <div class="flex-1 truncate pr-2">{{ additional.description }}</div>
+                                                    <div class="flex items-center gap-2 shrink-0">
+                                                        <span class="font-medium text-gray-900">${{ Number(additional.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                                                        <button type="button" @click="deleteAdditional(additional.id)" class="text-red-400 hover:text-red-600">
+                                                            <TrashIcon class="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p v-else class="text-xs text-gray-400 italic mb-3">Sin adicionales registrados.</p>
+
+                                            <!-- Add new additional inline form -->
+                                            <div class="flex gap-2 items-end">
+                                                <div class="flex-1">
+                                                    <input type="text" v-model="additionalForm.description" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand text-xs" placeholder="Descripción..." />
+                                                </div>
+                                                <div class="w-24">
+                                                    <input type="number" step="0.01" v-model="additionalForm.amount" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand text-xs" placeholder="$0.00" />
+                                                </div>
+                                                <button type="button" @click="addAdditional" :disabled="additionalForm.processing" class="px-2 py-1.5 bg-brand text-white rounded-md text-xs font-semibold hover:bg-brand-600 disabled:opacity-50">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
                                 </div>
                             </div>
                         </div>

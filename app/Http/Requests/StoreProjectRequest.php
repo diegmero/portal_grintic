@@ -29,7 +29,9 @@ class StoreProjectRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::enum(ProjectStatus::class)],
             'start_date' => ['nullable', 'date'],
-            'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'additional_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

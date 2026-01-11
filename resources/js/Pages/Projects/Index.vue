@@ -5,6 +5,7 @@ import { FolderIcon, PlusIcon, EyeIcon, PencilSquareIcon } from '@heroicons/vue/
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { ref } from 'vue';
 import CreateProjectSlideOver from '@/Components/Projects/CreateProjectSlideOver.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     projects: Array,
@@ -78,21 +79,26 @@ const filteredProjects = computed(() => {
                             
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Cliente</label>
-                                <select v-model="filters.company_id" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-xs sm:leading-6">
-                                    <option value="">Todos</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
-                                </select>
+                                <CustomSelect
+                                    v-model="filters.company_id"
+                                    :options="[{ value: '', label: 'Todos los clientes' }, ...companies.map(c => ({ value: c.id, label: c.name }))]"
+                                    placeholder="Todos los clientes"
+                                />
                             </div>
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Estado</label>
-                                <select v-model="filters.status" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-xs sm:leading-6">
-                                    <option value="">Todos</option>
-                                    <option value="active">Activos</option>
-                                    <option value="on_hold">En Pausa</option>
-                                    <option value="completed">Completados</option>
-                                    <option value="cancelled">Cancelados</option>
-                                </select>
+                                <CustomSelect
+                                    v-model="filters.status"
+                                    :options="[
+                                        { value: '', label: 'Todos los estados' },
+                                        { value: 'active', label: 'Activos' },
+                                        { value: 'on_hold', label: 'En Pausa' },
+                                        { value: 'completed', label: 'Completados' },
+                                        { value: 'cancelled', label: 'Cancelados' },
+                                    ]"
+                                    placeholder="Todos los estados"
+                                />
                             </div>
                         </div>
 

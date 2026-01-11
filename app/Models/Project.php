@@ -27,16 +27,17 @@ class Project extends Model implements HasMedia
         'company_id',
         'name',
         'description',
-        'status',
-        'progress',
         'start_date',
-        'due_date',
+        'end_date',
+        'status',
+        'price',
     ];
 
     protected $casts = [
-        'status' => ProjectStatus::class,
         'start_date' => 'date',
-        'due_date' => 'date',
+        'end_date' => 'date',
+        'status' => ProjectStatus::class,
+        'price' => 'decimal:2',
     ];
 
     public function company(): BelongsTo
@@ -47,5 +48,15 @@ class Project extends Model implements HasMedia
     public function stages(): HasMany
     {
         return $this->hasMany(Stage::class)->orderBy('order');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function additionals(): HasMany
+    {
+        return $this->hasMany(ProjectAdditional::class);
     }
 }
