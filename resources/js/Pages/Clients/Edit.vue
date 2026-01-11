@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import { ref } from 'vue';
 import Modal from '@/Components/Modal.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 import { PencilSquareIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -95,12 +96,16 @@ const generatePassword = () => {
 
                             <div>
                                 <InputLabel for="country" value="País" />
-                                <select id="country" v-model="form.country" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                    <option value="Colombia">Colombia</option>
-                                    <option value="Mexico">México</option>
-                                    <option value="USA">Estados Unidos</option>
-                                    <option value="Spain">España</option>
-                                </select>
+                                <CustomSelect
+                                    v-model="form.country"
+                                    :options="[
+                                        { value: 'Colombia', label: 'Colombia' },
+                                        { value: 'Mexico', label: 'México' },
+                                        { value: 'USA', label: 'Estados Unidos' },
+                                        { value: 'Spain', label: 'España' },
+                                    ]"
+                                    class="mt-1"
+                                />
                                 <InputError class="mt-2" :message="form.errors.country" />
                             </div>
 

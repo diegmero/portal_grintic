@@ -8,6 +8,7 @@ import {
     DocumentIcon,
     ArrowUpTrayIcon 
 } from '@heroicons/vue/24/outline';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     show: Boolean,
@@ -187,9 +188,11 @@ const statusOptions = [
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-900">Estado</label>
-                                            <select v-model="form.status" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6">
-                                                <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                                            </select>
+                                            <CustomSelect
+                                                v-model="form.status"
+                                                :options="statusOptions"
+                                                class="mt-1"
+                                            />
                                         </div>
 
                                         <div>

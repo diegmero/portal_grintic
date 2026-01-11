@@ -15,6 +15,7 @@ import {
     CreditCardIcon,
     TrashIcon
 } from '@heroicons/vue/24/outline';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     invoice: Object,
@@ -322,13 +323,17 @@ const statusConfig = {
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Método de Pago</label>
-                        <select v-model="paymentForm.method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm">
-                            <option>Transferencia Bancaria</option>
-                            <option>Efectivo</option>
-                            <option>Cheque</option>
-                            <option>Tarjeta de Crédito</option>
-                            <option>Otro</option>
-                        </select>
+                        <CustomSelect
+                            v-model="paymentForm.method"
+                            :options="[
+                                { value: 'Transferencia Bancaria', label: 'Transferencia Bancaria' },
+                                { value: 'Efectivo', label: 'Efectivo' },
+                                { value: 'Cheque', label: 'Cheque' },
+                                { value: 'Tarjeta de Crédito', label: 'Tarjeta de Crédito' },
+                                { value: 'Otro', label: 'Otro' },
+                            ]"
+                            class="mt-1"
+                        />
                     </div>
 
                     <div>

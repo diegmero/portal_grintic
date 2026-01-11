@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     open: Boolean,
@@ -92,9 +93,11 @@ const submit = () => {
 
                                                 <div>
                                                     <InputLabel for="country" value="País" />
-                                                    <select id="country" v-model="form.country" class="mt-1 block w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md shadow-sm">
-                                                        <option v-for="(label, country) in countries" :key="country" :value="country">{{ country.replace('_', ' ') }}</option>
-                                                    </select>
+                                                    <CustomSelect
+                                                        v-model="form.country"
+                                                        :options="Object.keys(countries).map(c => ({ value: c, label: c.replace('_', ' ') }))"
+                                                        class="mt-1"
+                                                    />
                                                     <InputError :message="form.errors.country" class="mt-2" />
                                                 </div>
 

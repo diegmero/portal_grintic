@@ -4,6 +4,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted } from 'vue';
 import { TrashIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import InputError from '@/Components/InputError.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     projects: Array,
@@ -67,17 +68,21 @@ const submit = () => {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Cliente (Empresa)</label>
-                                <select v-model="form.company_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm" required>
-                                    <option value="" disabled>Seleccione un cliente</option>
-                                    <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
-                                </select>
+                                <CustomSelect
+                                    v-model="form.company_id"
+                                    :options="[{ value: '', label: 'Seleccione un cliente' }, ...companies.map(c => ({ value: c.id, label: c.name }))]"
+                                    placeholder="Seleccione un cliente"
+                                    class="mt-1"
+                                />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Proyecto (Opcional)</label>
-                                <select v-model="form.project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm">
-                                    <option value="">Sin Proyecto</option>
-                                    <option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option>
-                                </select>
+                                <CustomSelect
+                                    v-model="form.project_id"
+                                    :options="[{ value: '', label: 'Sin Proyecto' }, ...projects.map(p => ({ value: p.id, label: p.name }))]"
+                                    placeholder="Sin Proyecto"
+                                    class="mt-1"
+                                />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Fecha Emisión</label>

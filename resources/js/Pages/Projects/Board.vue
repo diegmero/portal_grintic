@@ -16,6 +16,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     project: Object,
@@ -265,12 +266,16 @@ const getStageProgress = (stage) => {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="task-priority" class="block text-sm font-medium text-gray-700">Prioridad</label>
-                            <select id="task-priority" v-model="taskForm.priority" class="mt-1 block w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md shadow-sm">
-                                <option value="low">Baja</option>
-                                <option value="medium">Media</option>
-                                <option value="high">Alta</option>
-                                <option value="urgent">Urgente</option>
-                            </select>
+                            <CustomSelect
+                                v-model="taskForm.priority"
+                                :options="[
+                                    { value: 'low', label: 'Baja' },
+                                    { value: 'medium', label: 'Media' },
+                                    { value: 'high', label: 'Alta' },
+                                    { value: 'urgent', label: 'Urgente' },
+                                ]"
+                                class="mt-1"
+                            />
                         </div>
                         <div>
                             <label for="task-weight" class="block text-sm font-medium text-gray-700">Peso</label>

@@ -9,6 +9,7 @@ import TextArea from '@/Components/TextArea.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import CustomSelect from '@/Components/CustomSelect.vue';
 
 const props = defineProps({
     open: Boolean,
@@ -85,12 +86,12 @@ const submit = () => {
 
                                             <div>
                                                 <InputLabel for="company_id" value="Cliente / Empresa" />
-                                                <select id="company_id" v-model="form.company_id" class="mt-1 block w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md shadow-sm" required>
-                                                    <option value="" disabled>Selecciona un cliente</option>
-                                                    <option v-for="company in companies" :key="company.id" :value="company.id">
-                                                        {{ company.name }} ({{ company.tax_id || 'N/A' }})
-                                                    </option>
-                                                </select>
+                                                <CustomSelect
+                                                    v-model="form.company_id"
+                                                    :options="[{ value: '', label: 'Selecciona un cliente' }, ...companies.map(c => ({ value: c.id, label: `${c.name} (${c.tax_id || 'N/A'})` }))]"
+                                                    placeholder="Selecciona un cliente"
+                                                    class="mt-1"
+                                                />
                                                 <InputError :message="form.errors.company_id" class="mt-2" />
                                             </div>
 
@@ -116,9 +117,11 @@ const submit = () => {
 
                                             <div>
                                                 <InputLabel for="status" value="Estado Inicial" />
-                                                <select id="status" v-model="form.status" class="mt-1 block w-full border-gray-300 focus:border-brand focus:ring-brand rounded-md shadow-sm">
-                                                    <option v-for="status in statuses" :key="status.value" :value="status.value">{{ status.label }}</option>
-                                                </select>
+                                                <CustomSelect
+                                                    v-model="form.status"
+                                                    :options="statuses"
+                                                    class="mt-1"
+                                                />
                                                 <InputError :message="form.errors.status" class="mt-2" />
                                             </div>
 
