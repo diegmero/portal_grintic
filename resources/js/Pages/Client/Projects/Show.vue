@@ -174,8 +174,8 @@ const uploadFileToStage = (stageId, event) => {
     <Head :title="project.name" />
 
     <AuthenticatedLayout>
-                <template #header>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <template #header>
+            <div class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
                         {{ project.name }}
@@ -472,7 +472,7 @@ const uploadFileToStage = (stageId, event) => {
             :show="showSlideOver"
             :task="selectedTask"
             :stage-id="activeStageIdForTask"
-            :read-only="selectedTask ? true : !can('create_tasks')"
+            :read-only="false"
             :can-create-subtasks="can('create_subtasks')"
             :can-delete="false"
             @close="closeSlideOver"
@@ -481,7 +481,8 @@ const uploadFileToStage = (stageId, event) => {
         <!-- Project Edit SlideOver -->
         <ProjectEditSlideOver 
             :show="showEditProject" 
-            :project="project" 
+            :project="project"
+            :is-client="true"
             @close="showEditProject = false"
             @preview-file="(file) => openFilePreview(route('portal.media.show', file.id), file.file_name)"
         />

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { PaperAirplaneIcon } from '@heroicons/vue/24/solid';
 

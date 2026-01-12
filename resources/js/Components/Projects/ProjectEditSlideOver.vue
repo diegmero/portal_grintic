@@ -14,6 +14,10 @@ import CustomDatePicker from '@/Components/CustomDatePicker.vue';
 const props = defineProps({
     show: Boolean,
     project: Object,
+    isClient: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const emit = defineEmits(['close', 'preview-file']);
@@ -189,8 +193,8 @@ const statusOptions = [
                                             <textarea v-model="form.description" rows="6" class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand sm:text-sm sm:leading-6" placeholder="Detalles, acta de entrega, etc..."></textarea>
                                         </div>
 
-                                        <!-- Fechas de inicio y fin -->
-                                        <div class="grid grid-cols-2 gap-4">
+                                        <!-- Fechas de inicio y fin (Hidden for clients) -->
+                                        <div v-if="!isClient" class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-900">Fecha Inicio</label>
                                                 <CustomDatePicker 
@@ -209,7 +213,7 @@ const statusOptions = [
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div v-if="!isClient">
                                             <label class="block text-sm font-medium text-gray-900">Estado</label>
                                             <CustomSelect
                                                 v-model="form.status"
@@ -218,7 +222,7 @@ const statusOptions = [
                                             />
                                         </div>
 
-                                        <div>
+                                        <div v-if="!isClient">
                                             <label class="block text-sm font-medium text-gray-900">Presupuesto / Valor Total</label>
                                             <div class="relative mt-1 rounded-md shadow-sm">
                                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -273,8 +277,8 @@ const statusOptions = [
                                         </ul>
                                         <p v-else class="text-sm text-gray-500 text-center italic">No hay archivos adjuntos.</p>
                                     </div>
-                                    <!-- Additionals Management Section -->
-                                        <div class="border rounded-lg p-3 bg-gray-50">
+                                    <!-- Additionals Management Section (Admin Only) -->
+                                        <div v-if="!isClient" class="border rounded-lg p-3 bg-gray-50">
                                             <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">Adicionales / Excedentes</label>
                                             
                                             <!-- List existing additionals -->
