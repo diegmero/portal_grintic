@@ -33,6 +33,8 @@ class CreateCompanyAction
                 'password' => Hash::make($password),
             ]);
 
+            $user->assignRole('client');
+
             // 4. TODO: Send Welcome Email with Password
             // Mail::to($user)->send(new WelcomeClientMail($user, $password));
 

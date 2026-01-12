@@ -69,6 +69,23 @@ const form = useForm({
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
+            <!-- Role Display -->
+            <div>
+                <InputLabel value="Role" />
+                <div class="mt-1 flex items-center gap-2">
+                    <span 
+                        v-for="role in user.roles" 
+                        :key="role.id"
+                        class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+                    >
+                        {{ role.name }}
+                    </span>
+                    <span v-if="!user.roles || user.roles.length === 0" class="text-sm text-red-500">
+                        No Role Assigned (Contact Support)
+                    </span>
+                </div>
+            </div>
+
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
                 <p class="mt-2 text-sm text-gray-800">
                     Your email address is unverified.
