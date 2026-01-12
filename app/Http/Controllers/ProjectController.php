@@ -88,4 +88,39 @@ class ProjectController extends Controller
 
         return redirect()->back()->with('success', 'Proyecto actualizado exitosamente.');
     }
+
+    public function destroy(Project $project): RedirectResponse
+    {
+        // Only admins can delete projects
+        if (request()->user()->company_id) {
+            abort(403, 'Acción no permitida.');
+        }
+
+        // Safety checks - project must be "clean" to delete
+        $hasInvoices = $project->invoices()->exists();
+        $hasStages = $project->stages()->exists();
+        $hasAdditionals = $project->additionals()->exists();
+        $hasMedia = $project->media()->exists();
+
+        if ($hasInvoices) {
+            return redirect()->back()->with('error', 'No se puede eliminar: el proyecto tiene facturas asociadas.');
+        }
+
+        if ($hasStages) {
+            return redirect()->back()->with('error', 'No se puede eliminar: el proyecto tiene etapas. Elimínalas primero.');
+        }
+
+        if ($hasAdditionals) {
+            return redirect()->back()->with('error', 'No se puede eliminar: el proyecto tiene adicionales registrados.');
+        }
+
+        // Delete media if exists (this is optional, media without invoices/stages is safe to remove)
+        if ($hasMedia) {
+            $project->clearMediaCollection();
+        }
+
+        $project->delete();
+
+        return redirect()->route('projects.index')->with('success', 'Proyecto eliminado exitosamente.');
+    }
 }

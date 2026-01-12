@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/clients/{client}/users', [\App\Http\Controllers\ClientController::class, 'storeUser'])->name('clients.users.store');
     Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
     Route::delete('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'destroyUser'])->name('clients.users.destroy');
-    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show', 'update']);
+    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
     Route::get('/my-projects/{project}', [\App\Http\Controllers\ProjectController::class, 'clientView'])->name('projects.client-view');
     

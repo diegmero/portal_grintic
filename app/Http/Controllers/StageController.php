@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Stage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StageController extends Controller

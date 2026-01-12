@@ -6,7 +6,8 @@ import {
     PaperClipIcon, 
     TrashIcon, 
     DocumentIcon,
-    ArrowUpTrayIcon 
+    ArrowUpTrayIcon,
+    ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline';
 import CustomSelect from '@/Components/CustomSelect.vue';
 import CustomDatePicker from '@/Components/CustomDatePicker.vue';
@@ -139,6 +140,12 @@ const statusOptions = [
     { value: 'completed', label: 'Completado' },
     { value: 'cancelled', label: 'Cancelado' },
 ];
+
+const deleteProject = () => {
+    if (confirm('⚠️ ¿Estás seguro de eliminar este proyecto?\n\nEsta acción es irreversible. Solo se puede eliminar si no tiene etapas, tareas, facturas o adicionales.')) {
+        router.delete(route('projects.destroy', props.project.id));
+    }
+};
 </script>
 
 <template>
@@ -308,6 +315,29 @@ const statusOptions = [
                                                 </button>
                                             </div>
                                         </div>
+
+                                    <!-- Danger Zone (Admin Only) -->
+                                    <div v-if="!isClient" class="border-t border-red-200 pt-6 mt-6">
+                                        <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+                                            <div class="flex items-start gap-3">
+                                                <ExclamationTriangleIcon class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                                <div class="flex-1">
+                                                    <h3 class="text-sm font-semibold text-red-800">Zona de Peligro</h3>
+                                                    <p class="text-xs text-red-600 mt-1">
+                                                        Eliminar el proyecto es irreversible. Solo se puede eliminar si no tiene etapas, tareas, facturas o adicionales.
+                                                    </p>
+                                                    <button 
+                                                        type="button" 
+                                                        @click="deleteProject" 
+                                                        class="mt-3 inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
+                                                    >
+                                                        <TrashIcon class="h-4 w-4 mr-1.5" />
+                                                        Eliminar Proyecto
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
