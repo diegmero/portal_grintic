@@ -19,3 +19,7 @@ Broadcast::channel('comments.App.Models.Stage.{id}', function ($user, $id) {
 Broadcast::channel('admin.alerts', function ($user) {
     return is_null($user->company_id);
 });
+
+Broadcast::channel('client.notifications.{companyId}', function ($user, $companyId) {
+    return $user->company_id === $companyId;
+});

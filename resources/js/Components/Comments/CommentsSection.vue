@@ -112,11 +112,22 @@ onMounted(() => {
             
             // Listen for the CommentCreated event
             echoChannel.listen('.CommentCreated', (e) => {
-                // Check if we already have this comment (prevent duplicates from optimistic UI)
+                console.log('Event received: CommentCreated', e);
                 const exists = comments.value.some(c => c.id === e.id);
                 if (!exists) {
                     comments.value.push(e);
                 }
+            })
+            .listen('.CommentUpdated', (e) => {
+                console.log('Event received: CommentUpdated', e);
+                const index = comments.value.findIndex(c => c.id === e.id);
+                if (index !== -1) {
+                    comments.value[index].body = e.body;
+                }
+            })
+            .listen('.CommentDeleted', (e) => {
+                console.log('Event received: CommentDeleted', e);
+                comments.value = comments.value.filter(c => c.id !== e.id);
             });
         }
     } catch (error) {
@@ -129,6 +140,8 @@ onUnmounted(() => {
     if (echoChannel) {
         try {
             echoChannel.stopListening('.CommentCreated');
+            echoChannel.stopListening('.CommentUpdated');
+            echoChannel.stopListening('.CommentDeleted');
             window.Echo.leave(`comments.${props.commentableType.replace(/\\/g, '.')}.${props.commentableId}`);
         } catch (error) {
             console.warn('Echo cleanup failed:', error);

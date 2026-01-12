@@ -13,26 +13,31 @@ import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 
 onMounted(() => {
-    // Only subscribe if user is an admin (no company_id means admin)
-    const isAdmin = !page.props.auth.user?.company_id;
+    // Check if user is admin or client
+    const user = page.props.auth.user;
+    const isAdmin = !user?.company_id;
     
-    if (!isAdmin) {
-        return;
+    if (isAdmin) {
+        // ADMIN LISTENER
+        window.Echo.private('admin.alerts')
+            .listen('.ClientActivityDetected', (e) => {
+                title.value = `Actividad: ${e.client_name ?? 'Cliente'}`;
+                message.value = e.message;
+                type.value = 'info';
+                show.value = true;
+                setTimeout(() => { show.value = false; }, 8000);
+            });
+    } else if (user?.company_id) {
+        // CLIENT LISTENER
+        window.Echo.private(`client.notifications.${user.company_id}`)
+            .listen('.AdminResponseDetected', (e) => {
+                title.value = 'Nueva Actividad';
+                message.value = e.message;
+                type.value = 'info';
+                show.value = true;
+                setTimeout(() => { show.value = false; }, 8000);
+            });
     }
-
-    // Listen to admin alerts
-    // For custom events with broadcastAs(), use dot prefix
-    window.Echo.private('admin.alerts')
-        .listen('.ClientActivityDetected', (e) => {
-            title.value = `Actividad: ${e.client_name}`;
-            message.value = e.message;
-            type.value = 'info';
-            show.value = true;
-
-            setTimeout(() => {
-                show.value = false;
-            }, 8000);
-        });
 });
 
 watch(() => page.props.flash, (flash) => {
