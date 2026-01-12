@@ -398,6 +398,7 @@ const deleteTask = () => {
                                             <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Comentarios</label>
                                             <CommentsSection 
                                                 :commentable-id="task?.id" 
+                                                commentable-type="App\Models\Task"
                                                 :initial-comments="task?.comments || []" 
                                             />
                                         </div>
@@ -418,7 +419,7 @@ const deleteTask = () => {
                                         </button>
                                     </template>
                                     <!-- Edit mode: show metadata -->
-                                    <template v-else>
+                                    <template v-else-if="task">
                                         <div class="text-xs text-gray-400 flex items-center justify-between">
                                             <span>Creada: {{ formatDate(task.created_at) || '—' }}</span>
                                             <span v-if="task.due_date" :class="[new Date(task.due_date) < new Date() ? 'text-red-500 font-medium' : '']">

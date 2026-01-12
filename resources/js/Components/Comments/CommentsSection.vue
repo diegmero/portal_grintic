@@ -51,14 +51,19 @@ const submit = () => {
 
 onMounted(() => {
     // Echo Listener - sanitize channel name (Pusher doesn't allow backslashes)
-    const sanitizedType = props.commentableType.replace(/\\/g, '.');
-    window.Echo.private(`comments.${sanitizedType}.${props.commentableId}`)
-        .listen('CommentCreated', (e) => {
-            // Check if we already have this comment (from optimistic UI)
-            // Ideally we check by ID, but optimistic ID is temp. 
-            // Since we broadcast toOthers(), the sender won't receive this event usually.
-            comments.value.push(e);
-        });
+    // Wrapped in try-catch to prevent errors when websocket server is unavailable
+    try {
+        if (window.Echo) {
+            const sanitizedType = props.commentableType.replace(/\\/g, '.');
+            window.Echo.private(`comments.${sanitizedType}.${props.commentableId}`)
+                .listen('CommentCreated', (e) => {
+                    // Check if we already have this comment (from optimistic UI)
+                    comments.value.push(e);
+                });
+        }
+    } catch (error) {
+        console.warn('Echo connection failed:', error);
+    }
 });
 
 </script>

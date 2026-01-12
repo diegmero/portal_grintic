@@ -581,7 +581,7 @@ const deleteSubtask = (subtaskId) => {
                                     </div>
 
                                     <div v-if="stage.tasks.length === 0" class="px-4 py-4 text-center text-xs text-gray-400">
-                                        Sin tareas. <button @click="openAddTaskModal(stage.id)" class="text-brand hover:underline">Crear primera tarea</button>
+                                        Sin tareas. <button @click="openCreateTaskSlideOver(stage.id)" class="text-brand hover:underline">Crear primera tarea</button>
                                     </div>
                                 </div>
                             </div>
