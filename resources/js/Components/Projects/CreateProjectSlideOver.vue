@@ -49,6 +49,9 @@ const submit = () => {
             emit('close');
             form.reset();
         },
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+        }
     });
 };
 </script>
@@ -93,6 +96,19 @@ const submit = () => {
                                     </div>
                                     <div class="mt-1">
                                         <p class="text-sm text-gray-300">Crea un nuevo proyecto y asígnalo a un cliente.</p>
+                                    </div>
+                                    <div v-if="form.hasErrors" class="mt-4 rounded-md bg-red-50 p-3 border border-red-200">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <XMarkIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-red-800">Hay errores en el formulario</h3>
+                                                <div class="mt-1 text-sm text-red-700">
+                                                    <p>Por favor revisa los campos señalados en rojo.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="relative flex-1 px-4 py-6 sm:px-6 space-y-6">
