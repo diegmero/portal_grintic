@@ -1,20 +1,23 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { TransitionRoot, TransitionChild } from '@headlessui/vue';
-import { BellIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { BellIcon, XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline';
 
 const show = ref(false);
 const message = ref('');
 const title = ref('Notification');
+const type = ref('info'); // info, success, error
 
 import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
 
 onMounted(() => {
-    // Only subscribe if user is likely an admin (no company_id) or check roles if available
-    // Prevent clients from hitting 403 on admin channel
-    if (page.props.auth.user.company_id) {
+    // Only subscribe if user is an admin
+    // Check using the shared roles prop
+    const isAdmin = page.props.auth.user.roles.some(role => role.name === 'admin');
+    
+    if (!isAdmin) {
         return;
     }
 
@@ -24,6 +27,7 @@ onMounted(() => {
         .listen('.ClientActivityDetected', (e) => {
             title.value = `Actividad: ${e.client_name}`;
             message.value = e.message;
+            type.value = 'info';
             show.value = true;
 
             setTimeout(() => {
@@ -31,6 +35,23 @@ onMounted(() => {
             }, 8000);
         });
 });
+
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        title.value = 'Éxito';
+        message.value = flash.success;
+        type.value = 'success';
+        show.value = true;
+        setTimeout(() => show.value = false, 5000);
+    }
+    if (flash?.error) {
+        title.value = 'Error';
+        message.value = flash.error;
+        type.value = 'error';
+        show.value = true;
+        setTimeout(() => show.value = false, 8000);
+    }
+}, { deep: true });
 </script>
 
 <template>
@@ -41,7 +62,9 @@ onMounted(() => {
             <div class="p-4">
               <div class="flex items-start">
                 <div class="flex-shrink-0">
-                  <BellIcon class="h-6 w-6 text-brand" aria-hidden="true" />
+                  <BellIcon v-if="type === 'info'" class="h-6 w-6 text-brand" aria-hidden="true" />
+                  <CheckCircleIcon v-if="type === 'success'" class="h-6 w-6 text-green-500" aria-hidden="true" />
+                  <ExclamationCircleIcon v-if="type === 'error'" class="h-6 w-6 text-red-500" aria-hidden="true" />
                 </div>
                 <div class="ml-3 w-0 flex-1 pt-0.5">
                   <p class="text-sm font-medium text-gray-900">{{ title }}</p>
