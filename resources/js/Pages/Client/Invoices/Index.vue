@@ -69,6 +69,18 @@ const overdueCount = props.invoices.filter(inv => inv.status === 'overdue' || is
         </template>
 
         <div class="py-0 space-y-6">
+            <!-- No Permission State -->
+            <div v-if="!$page.props.auth.user?.permissions?.find(p => p.name === 'view_financials')" class="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
+                <div class="bg-gray-50 p-6 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900">Acceso Restringido</h3>
+                <p class="text-gray-500 mt-1">No tienes permisos para ver las finanzas. Solicita acceso a tu administrador.</p>
+            </div>
+
+            <div v-else class="space-y-6">
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -154,6 +166,7 @@ const overdueCount = props.invoices.filter(inv => inv.status === 'overdue' || is
                     <DocumentTextIcon class="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p class="text-gray-500">No tienes facturas aún.</p>
                 </div>
+            </div>
             </div>
         </div>
     </AuthenticatedLayout>

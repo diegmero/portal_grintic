@@ -41,6 +41,7 @@ const userForm = useForm({
 });
 
 const availablePermissions = [
+    { id: 'view_projects', label: 'Ver Proyectos' },
     { id: 'create_stages', label: 'Crear Etapas' },
     { id: 'create_tasks', label: 'Crear Tareas' },
     { id: 'create_subtasks', label: 'Crear Subtareas' },

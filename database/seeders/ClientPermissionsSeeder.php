@@ -18,7 +18,9 @@ class ClientPermissionsSeeder extends Seeder
 
         // Specific permissions for Client Users
         $permissions = [
+            'view_projects', // New: Can see projects list
             'create_stages',
+            'create_tasks',
             'create_tasks',
             'create_subtasks',
             'upload_files',

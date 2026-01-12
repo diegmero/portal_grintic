@@ -28,11 +28,13 @@ class ClientPortalController extends Controller
     public function projects(): Response
     {
         return Inertia::render('Client/Projects/Index', [
-            'projects' => Project::where('company_id', $this->companyId())
-                ->with(['stages.tasks'])
-                ->withCount(['stages', 'invoices'])
-                ->latest()
-                ->get(),
+            'projects' => Auth::user()->can('view_projects') 
+                ? Project::where('company_id', $this->companyId())
+                    ->with(['stages.tasks'])
+                    ->withCount(['stages', 'invoices'])
+                    ->latest()
+                    ->get()
+                : [],
         ]);
     }
 
@@ -77,10 +79,12 @@ class ClientPortalController extends Controller
         }
 
         return Inertia::render('Client/Invoices/Index', [
-            'invoices' => Invoice::where('company_id', $this->companyId())
-                ->with(['project', 'items'])
-                ->latest()
-                ->get(),
+            'invoices' => Auth::user()->can('view_financials')
+                ? Invoice::where('company_id', $this->companyId())
+                    ->with(['project', 'items'])
+                    ->latest()
+                    ->get()
+                : [],
         ]);
     }
 
