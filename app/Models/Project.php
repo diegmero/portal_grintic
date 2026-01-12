@@ -23,6 +23,17 @@ class Project extends Model implements HasMedia
             ->useDisk('local');
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Project $project) {
+            if ($project->isForceDeleting()) {
+                $project->stages()->each(fn($stage) => $stage->delete());
+                // Spatie Media Library cleans up itself on model delete, but we ensure it
+                $project->clearMediaCollection('project_files');
+            }
+        });
+    }
+
     protected $fillable = [
         'company_id',
         'name',

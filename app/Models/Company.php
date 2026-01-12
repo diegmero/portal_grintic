@@ -24,6 +24,15 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Company $company) {
+            // Manually delete children to trigger their own deleting events (for cleanup)
+            $company->projects()->each(fn($project) => $project->delete());
+            $company->users()->get()->each(fn($user) => $user->delete());
+        });
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);

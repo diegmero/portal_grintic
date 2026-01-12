@@ -47,6 +47,16 @@ class Task extends Model implements HasMedia
             ->setDescriptionForEvent(fn(string $eventName) => "Tarea fue {$eventName}");
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Task $task) {
+            if ($task->isForceDeleting()) {
+                $task->comments()->delete();
+                $task->clearMediaCollection('task_files');
+            }
+        });
+    }
+
     public function stage(): BelongsTo
     {
         return $this->belongsTo(Stage::class);
