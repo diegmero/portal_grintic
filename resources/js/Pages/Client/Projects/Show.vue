@@ -1,5 +1,6 @@
+<script setup>
 import { ref, computed } from 'vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import TaskDetailSlideOver from '@/Components/Projects/TaskDetailSlideOver.vue';
 import ProjectEditSlideOver from '@/Components/Projects/ProjectEditSlideOver.vue';
@@ -12,12 +13,12 @@ import {
     ChartBarIcon,
     CheckCircleIcon,
     XMarkIcon,
-    CheckCircleIcon,
-    XMarkIcon,
     EyeIcon,
     PlusIcon,
     PencilIcon,
     TrashIcon,
+    ArrowUpTrayIcon,
+    ClipboardDocumentListIcon,
 } from '@heroicons/vue/24/outline';
 import { FlagIcon } from '@heroicons/vue/24/solid';
 import Modal from '@/Components/Modal.vue';
@@ -85,15 +86,11 @@ const statusConfig = {
 // SlideOver Control
 const selectedTask = ref(null);
 const showSlideOver = ref(false);
-
-const openTask = (task) => {
-    selectedTask.value = task;
-    showSlideOver.value = true;
-};
+const activeStageIdForTask = ref(null);
 
 const closeSlideOver = () => {
     showSlideOver.value = false;
-    setTimeout(() => { selectedTask.value = null; }, 300);
+    setTimeout(() => { selectedTask.value = null; activeStageIdForTask.value = null; }, 300);
 };
 
 // File Preview Logic
@@ -117,7 +114,6 @@ const closeFilePreview = () => {
 const projectFiles = computed(() => props.files || []);
 
 // Permission Helpers
-import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 const can = (permission) => page.props.auth.user?.permissions?.some(p => p.name === permission) || false;
 
@@ -136,8 +132,6 @@ const addStage = () => {
 };
 
 // --- Task Management ---
-const activeStageIdForTask = ref(null);
-
 // Open slide-over in create mode
 const openCreateTaskSlideOver = (stageId) => {
     selectedTask.value = null;
@@ -145,7 +139,7 @@ const openCreateTaskSlideOver = (stageId) => {
     showSlideOver.value = true;
 };
 
-// Update existing openTask to just set task and show
+// Open existing task
 const openTask = (task) => {
     selectedTask.value = task;
     activeStageIdForTask.value = task.stage_id;
