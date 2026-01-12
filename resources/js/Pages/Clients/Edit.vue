@@ -9,7 +9,8 @@ import InputError from '@/Components/InputError.vue';
 import { ref } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import CustomSelect from '@/Components/CustomSelect.vue';
-import { PencilSquareIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
+import { PencilSquareIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
     client: Object,
@@ -30,14 +31,25 @@ const submit = () => {
 // User Management Logic
 const editingUser = ref(null);
 const showUserModal = ref(false);
+const isCreatingUser = ref(false);
 const userForm = useForm({
     name: '',
     email: '',
     password: '',
 });
 
+const createUser = () => {
+    editingUser.value = null;
+    isCreatingUser.value = true;
+    userForm.reset();
+    userForm.password = ''; // Required for new users
+    showPassword.value = false;
+    showUserModal.value = true;
+};
+
 const editUser = (user) => {
     editingUser.value = user;
+    isCreatingUser.value = false;
     userForm.name = user.name;
     userForm.email = user.email;
     userForm.password = ''; // Leave empty if not changing
@@ -45,16 +57,32 @@ const editUser = (user) => {
 };
 
 const submitUserUpdate = () => {
-    if (!editingUser.value) return;
+    if (isCreatingUser.value) {
+        userForm.post(route('clients.users.store', props.client.id), {
+            onSuccess: () => {
+                showUserModal.value = false;
+                userForm.reset();
+                showPassword.value = false;
+            }
+        });
+    } else {
+        if (!editingUser.value) return;
 
-    userForm.put(route('clients.users.update', [props.client.id, editingUser.value.id]), {
-        onSuccess: () => {
-             showUserModal.value = false;
-             userForm.reset();
-             editingUser.value = null;
-             showPassword.value = false;
-        }
-    });
+        userForm.put(route('clients.users.update', [props.client.id, editingUser.value.id]), {
+            onSuccess: () => {
+                showUserModal.value = false;
+                userForm.reset();
+                editingUser.value = null;
+                showPassword.value = false;
+            }
+        });
+    }
+};
+
+const deleteUser = (user) => {
+    if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
+        router.delete(route('clients.users.destroy', [props.client.id, user.id]));
+    }
 };
 
 const showPassword = ref(false);
@@ -133,7 +161,12 @@ const generatePassword = () => {
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-medium text-gray-900">Contactos / Usuarios</h3>
-                            <!-- Could add "Add User" button here later -->
+                            <button 
+                                @click="createUser"
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                                <PlusIcon class="h-4 w-4 mr-1" /> Agregar Usuario
+                            </button>
                         </div>
                         
                         <div class="overflow-x-auto">
@@ -150,9 +183,14 @@ const generatePassword = () => {
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button @click="editUser(user)" class="text-brand hover:text-indigo-900 flex items-center justify-end gap-1 w-full">
-                                                <PencilSquareIcon class="h-4 w-4" /> Editar
-                                            </button>
+                                            <div class="flex justify-end gap-2">
+                                                <button @click="editUser(user)" class="text-indigo-600 hover:text-indigo-900 flex items-center">
+                                                    <PencilSquareIcon class="h-4 w-4 mr-1" /> Editar
+                                                </button>
+                                                <button @click="deleteUser(user)" class="text-red-600 hover:text-red-900 flex items-center">
+                                                    <TrashIcon class="h-4 w-4 mr-1" /> Eliminar
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr v-if="client.users.length === 0">
@@ -170,7 +208,9 @@ const generatePassword = () => {
         <!-- Edit User Modal -->
         <Modal :show="showUserModal" @close="showUserModal = false">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Editar Usuario: {{ editingUser?.name }}</h2>
+                <h2 class="text-lg font-medium text-gray-900 mb-4">
+                    {{ isCreatingUser ? 'Crear Nuevo Usuario' : 'Editar Usuario: ' + editingUser?.name }}
+                </h2>
                 <div class="space-y-4">
                      <div>
                         <InputLabel for="user_name" value="Nombre Completo" />
@@ -183,7 +223,7 @@ const generatePassword = () => {
                         <InputError :message="userForm.errors.email" />
                     </div>
                      <div>
-                        <InputLabel for="user_password" value="Nueva Contraseña (Opcional)" />
+                        <InputLabel for="user_password" :value="isCreatingUser ? 'Contraseña' : 'Nueva Contraseña (Opcional)'" />
                         <div class="flex items-center gap-2 mt-1">
                             <div class="relative w-full">
                                 <TextInput 
@@ -217,7 +257,9 @@ const generatePassword = () => {
                 </div>
                 <div class="mt-6 flex justify-end">
                     <SecondaryButton @click="showUserModal = false">Cancelar</SecondaryButton>
-                    <PrimaryButton class="ml-3" @click="submitUserUpdate" :disabled="userForm.processing">Actualizar Usuario</PrimaryButton>
+                    <PrimaryButton class="ml-3" @click="submitUserUpdate" :disabled="userForm.processing">
+                        {{ isCreatingUser ? 'Crear Usuario' : 'Actualizar Usuario' }}
+                    </PrimaryButton>
                 </div>
             </div>
         </Modal>
