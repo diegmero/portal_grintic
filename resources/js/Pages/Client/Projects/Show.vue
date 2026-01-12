@@ -1,8 +1,8 @@
-<script setup>
 import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import TaskDetailSlideOver from '@/Components/Projects/TaskDetailSlideOver.vue';
+import ProjectEditSlideOver from '@/Components/Projects/ProjectEditSlideOver.vue';
 import { 
     CalendarIcon, 
     DocumentTextIcon, 
@@ -12,10 +12,18 @@ import {
     ChartBarIcon,
     CheckCircleIcon,
     XMarkIcon,
-    EyeIcon
+    CheckCircleIcon,
+    XMarkIcon,
+    EyeIcon,
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
 } from '@heroicons/vue/24/outline';
 import { FlagIcon } from '@heroicons/vue/24/solid';
 import Modal from '@/Components/Modal.vue';
+import TextInput from '@/Components/TextInput.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
 
 const props = defineProps({
     project: Object,
@@ -108,13 +116,71 @@ const closeFilePreview = () => {
 // Files Organizing
 const projectFiles = computed(() => props.files || []);
 
+// Permission Helpers
+import { usePage } from '@inertiajs/vue3';
+const page = usePage();
+const can = (permission) => page.props.auth.user?.permissions?.some(p => p.name === permission) || false;
+
+// --- Project Edit ---
+const showEditProject = ref(false);
+
+// --- Stage Management ---
+const showAddStageModal = ref(false);
+const stageForm = useForm({ name: '' });
+
+const addStage = () => {
+    stageForm.post(route('stages.store', props.project.id), {
+        onSuccess: () => { stageForm.reset(); showAddStageModal.value = false; },
+        preserveScroll: true,
+    });
+};
+
+// --- Task Management ---
+const activeStageIdForTask = ref(null);
+
+// Open slide-over in create mode
+const openCreateTaskSlideOver = (stageId) => {
+    selectedTask.value = null;
+    activeStageIdForTask.value = stageId;
+    showSlideOver.value = true;
+};
+
+// Update existing openTask to just set task and show
+const openTask = (task) => {
+    selectedTask.value = task;
+    activeStageIdForTask.value = task.stage_id;
+    showSlideOver.value = true;
+};
+
+// --- File Upload ---
+const uploadFileToStage = (stageId, event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Basic Validation
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        alert('El archivo no puede superar los 10MB.');
+        event.target.value = '';
+        return;
+    }
+    
+    router.post(route('stages.media.store', stageId), { file }, {
+        forceFormData: true,
+        preserveScroll: true,
+        onError: (errors) => {
+            if (errors.file) alert(errors.file);
+        }
+    });
+    event.target.value = '';
+};
+
 </script>
 
 <template>
     <Head :title="project.name" />
 
     <AuthenticatedLayout>
-        <template #header>
+                <template #header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
@@ -123,6 +189,15 @@ const projectFiles = computed(() => props.files || []);
                     <p class="mt-1 text-sm text-gray-500 flex items-center gap-2">
                         <span>{{ project.company.name }}</span>
                     </p>
+                </div>
+                <div v-if="can('edit_project')">
+                     <button 
+                        @click="showEditProject = true"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    >
+                        <PencilIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+                        Editar Proyecto
+                    </button>
                 </div>
             </div>
         </template>
@@ -284,14 +359,33 @@ const projectFiles = computed(() => props.files || []);
                         
                         <!-- Stages List -->
                         <div class="space-y-6">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center justify-center gap-2">
-                                <ClipboardDocumentListIcon class="h-5 w-5 text-gray-400" />
-                                Etapas del Proyecto
-                            </h3>
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-bold text-gray-900 flex items-center justify-center gap-2">
+                                    <ClipboardDocumentListIcon class="h-5 w-5 text-gray-400" />
+                                    Etapas del Proyecto
+                                </h3>
+                                <button 
+                                    v-if="can('create_stages')"
+                                    @click="showAddStageModal = true"
+                                    class="inline-flex items-center rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600"
+                                >
+                                    <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
+                                    Nueva Etapa
+                                </button>
+                            </div>
                             
                             <div v-for="stage in project.stages" :key="stage.id" class="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
                                 <div class="bg-gray-50/80 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                                     <h3 class="text-base font-bold text-gray-900">{{ stage.name }}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <label v-if="can('upload_files')" class="p-1.5 text-gray-400 hover:text-brand rounded cursor-pointer" title="Subir Archivo">
+                                            <ArrowUpTrayIcon class="h-5 w-5" />
+                                            <input type="file" class="hidden" @change="uploadFileToStage(stage.id, $event)" />
+                                        </label>
+                                        <button v-if="can('create_tasks')" @click="openCreateTaskSlideOver(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
+                                            <PlusIcon class="h-5 w-5" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Stage Files -->
@@ -379,13 +473,38 @@ const projectFiles = computed(() => props.files || []);
             </div>
         </div>
 
-        <!-- Task Detail SlideOver (Read Only) -->
+        <!-- Task Detail SlideOver -->
         <TaskDetailSlideOver
             :show="showSlideOver"
             :task="selectedTask"
-            :read-only="true"
+            :stage-id="activeStageIdForTask"
+            :read-only="selectedTask ? true : !can('create_tasks')"
+            :can-create-subtasks="can('create_subtasks')"
+            :can-delete="false"
             @close="closeSlideOver"
         />
+        
+        <!-- Project Edit SlideOver -->
+        <ProjectEditSlideOver 
+            :show="showEditProject" 
+            :project="project" 
+            @close="showEditProject = false"
+            @preview-file="(file) => openFilePreview(route('portal.media.show', file.id), file.file_name)"
+        />
+
+        <!-- Add Stage Modal -->
+        <Modal :show="showAddStageModal" @close="showAddStageModal = false">
+            <div class="p-5">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Nueva Etapa</h3>
+                <form @submit.prevent="addStage">
+                    <TextInput v-model="stageForm.name" type="text" class="w-full" placeholder="Nombre de la etapa" required autofocus />
+                    <div class="mt-4 flex justify-end gap-2">
+                        <SecondaryButton @click="showAddStageModal = false" type="button">Cancelar</SecondaryButton>
+                        <PrimaryButton type="submit" :disabled="stageForm.processing">Crear</PrimaryButton>
+                    </div>
+                </form>
+            </div>
+        </Modal>
 
         <!-- File Preview Modal -->
         <Modal :show="showFilePreviewModal" @close="closeFilePreview" maxWidth="4xl">

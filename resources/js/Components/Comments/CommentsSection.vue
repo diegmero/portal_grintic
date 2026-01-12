@@ -11,6 +11,9 @@ const props = defineProps({
 
 const comments = ref([...props.initialComments]);
 const currentUser = usePage().props.auth.user;
+const canCreateComments = computed(() => {
+    return currentUser?.permissions?.some(p => p.name === 'create_comments') || false;
+});
 
 // Watch for prop changes (when Inertia reloads the page)
 watch(() => props.initialComments, (newComments) => {
@@ -113,7 +116,7 @@ onUnmounted(() => {
              <p v-if="comments.length === 0" class="text-xs text-center text-gray-400 py-2">Sin comentarios.</p>
         </div>
 
-        <form @submit.prevent="submit" class="relative">
+        <form v-if="canCreateComments" @submit.prevent="submit" class="relative">
             <input 
                 v-model="form.body"
                 type="text" 
@@ -124,5 +127,8 @@ onUnmounted(() => {
                 <PaperAirplaneIcon class="h-5 w-5" aria-hidden="true" />
             </button>
         </form>
+        <p v-else class="text-xs text-center text-gray-400 py-2 border-t border-gray-100 italic">
+            No tienes permisos para comentar.
+        </p>
     </div>
 </template>

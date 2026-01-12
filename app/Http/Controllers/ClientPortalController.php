@@ -74,10 +74,6 @@ class ClientPortalController extends Controller
      */
     public function invoices(): Response
     {
-        if (!Auth::user()->can('view_financials')) {
-            abort(403, 'No tienes permiso para ver facturas.');
-        }
-
         return Inertia::render('Client/Invoices/Index', [
             'invoices' => Auth::user()->can('view_financials')
                 ? Invoice::where('company_id', $this->companyId())

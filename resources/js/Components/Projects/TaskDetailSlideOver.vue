@@ -22,6 +22,14 @@ const props = defineProps({
     readOnly: {
         type: Boolean,
         default: false
+    },
+    canCreateSubtasks: {
+        type: Boolean,
+        default: true
+    },
+    canDelete: {
+        type: Boolean,
+        default: true
     }
 });
 
@@ -252,8 +260,9 @@ const deleteTask = () => {
                                             </div>
                                         </template>
                                     </div>
+                                    </div>
                                     <div class="flex items-center gap-2">
-                                        <button v-if="!isCreateMode && !readOnly" @click="deleteTask" class="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <button v-if="!isCreateMode && !readOnly && canDelete" @click="deleteTask" class="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors">
                                             <TrashIcon class="h-5 w-5" />
                                         </button>
                                         <button @click="$emit('close')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
@@ -400,7 +409,7 @@ const deleteTask = () => {
                                                 </div>
 
                                                 <!-- Add Subtask -->
-                                                <div v-if="!readOnly" class="flex items-center gap-2 py-2 px-2">
+                                                <div v-if="canCreateSubtasks" class="flex items-center gap-2 py-2 px-2">
                                                     <PlusIcon class="h-5 w-5 text-gray-300" />
                                                     <input 
                                                         v-model="newSubtaskName"
