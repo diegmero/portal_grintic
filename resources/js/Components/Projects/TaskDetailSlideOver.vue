@@ -393,11 +393,12 @@ const deleteTask = () => {
                                             </div>
                                         </div>
 
-                                        <!-- Comments Section (only in edit mode) -->
-                                        <div v-if="!isCreateMode" class="space-y-3">
+                                        <!-- Comments Section (only in edit mode and when task.id exists) -->
+                                        <div v-if="!isCreateMode && task?.id" class="space-y-3">
                                             <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Comentarios</label>
                                             <CommentsSection 
-                                                :commentable-id="task?.id" 
+                                                :key="task.id"
+                                                :commentable-id="task.id" 
                                                 commentable-type="App\Models\Task"
                                                 :initial-comments="task?.comments || []" 
                                             />

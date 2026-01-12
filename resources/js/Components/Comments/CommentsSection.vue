@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { PaperAirplaneIcon } from '@heroicons/vue/24/solid';
 
@@ -11,6 +11,11 @@ const props = defineProps({
 
 const comments = ref([...props.initialComments]);
 const currentUser = usePage().props.auth.user;
+
+// Watch for prop changes (when Inertia reloads the page)
+watch(() => props.initialComments, (newComments) => {
+    comments.value = [...newComments];
+}, { deep: true });
 
 const form = useForm({
     body: '',
@@ -48,6 +53,7 @@ const submit = () => {
         }
     });
 };
+let echoChannel = null;
 
 onMounted(() => {
     // Echo Listener - sanitize channel name (Pusher doesn't allow backslashes)
@@ -55,17 +61,40 @@ onMounted(() => {
     try {
         if (window.Echo) {
             const sanitizedType = props.commentableType.replace(/\\/g, '.');
-            window.Echo.private(`comments.${sanitizedType}.${props.commentableId}`)
-                .listen('CommentCreated', (e) => {
-                    // Check if we already have this comment (from optimistic UI)
+            const channelName = `comments.${sanitizedType}.${props.commentableId}`;
+            
+            echoChannel = window.Echo.private(channelName);
+            
+            // Listen for the CommentCreated event
+            // Laravel broadcasts as '.CommentCreated' for custom event classes
+            echoChannel.listen('.CommentCreated', (e) => {
+                console.log('Received real-time comment:', e);
+                
+                // Check if we already have this comment (prevent duplicates from optimistic UI)
+                const exists = comments.value.some(c => c.id === e.id);
+                if (!exists) {
                     comments.value.push(e);
-                });
+                }
+            });
+            
+            console.log(`Subscribed to channel: ${channelName}`);
         }
     } catch (error) {
         console.warn('Echo connection failed:', error);
     }
 });
 
+onUnmounted(() => {
+    // Clean up the Echo subscription
+    if (echoChannel) {
+        try {
+            echoChannel.stopListening('.CommentCreated');
+            window.Echo.leave(`comments.${props.commentableType.replace(/\\/g, '.')}.${props.commentableId}`);
+        } catch (error) {
+            console.warn('Echo cleanup failed:', error);
+        }
+    }
+});
 </script>
 
 <template>

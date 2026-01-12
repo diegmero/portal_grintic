@@ -9,21 +9,23 @@ const title = ref('Notification');
 
 onMounted(() => {
     // Listen to admin alerts
+    // For custom events with broadcastAs(), use dot prefix
     window.Echo.private('admin.alerts')
-        .listen('ClientActivityDetected', (e) => {
+        .listen('.ClientActivityDetected', (e) => {
+            console.log('Received admin alert:', e);
             title.value = `Actividad: ${e.client_name}`;
             message.value = e.message;
             show.value = true;
 
             setTimeout(() => {
                 show.value = false;
-            }, 5000);
+            }, 8000);
         });
 });
 </script>
 
 <template>
-     <div aria-live="assertive" class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-50">
+     <div aria-live="assertive" class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6" style="z-index: 9999;">
       <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
         <TransitionRoot as="template" :show="show" enter="transform ease-out duration-300 transition" enter-from="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" enter-to="translate-y-0 opacity-100 sm:translate-x-0" leave="transition ease-in duration-100" leave-from="opacity-100" leave-to="opacity-0">
           <div class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">

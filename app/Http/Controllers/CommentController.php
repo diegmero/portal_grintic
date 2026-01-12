@@ -35,8 +35,28 @@ class CommentController extends Controller
 
         if ($request->user()->hasRole('client')) {
             try {
+                // Get the commentable entity for context
+                $commentableClass = $validated['commentable_type'];
+                $commentable = $commentableClass::find($validated['commentable_id']);
+                
+                // Build a human-readable context
+                $contextName = 'elemento';
+                if ($commentable) {
+                    $contextName = $commentable->name ?? $commentable->title ?? 'elemento';
+                }
+                
+                // Type label
+                $typeLabel = match($validated['commentable_type']) {
+                    'App\\Models\\Task' => 'tarea',
+                    'App\\Models\\Stage' => 'etapa',
+                    default => 'elemento'
+                };
+
+                // Send the actual comment in the notification
+                $message = "💬 Comentario en {$typeLabel} \"{$contextName}\": \"{$validated['body']}\"";
+                
                 event(new \App\Events\ClientActivityDetected(
-                    "Cliente comentó en: {$validated['commentable_type']} #{$validated['commentable_id']}",
+                    $message,
                     $request->user()
                 ));
             } catch (\Exception $e) {

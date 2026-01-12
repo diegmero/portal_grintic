@@ -34,4 +34,9 @@ class ClientActivityDetected implements ShouldBroadcastNow
             'timestamp' => now()->toIso8601String(),
         ];
     }
+
+    public function broadcastAs(): string
+    {
+        return 'ClientActivityDetected';
+    }
 }

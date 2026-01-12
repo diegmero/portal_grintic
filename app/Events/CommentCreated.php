@@ -42,4 +42,12 @@ class CommentCreated implements ShouldBroadcastNow
             'created_at' => $this->comment->created_at->toIso8601String(),
         ];
     }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'CommentCreated';
+    }
 }
