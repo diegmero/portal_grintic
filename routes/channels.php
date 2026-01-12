@@ -17,5 +17,5 @@ Broadcast::channel('comments.App.Models.Stage.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('admin.alerts', function ($user) {
-    return $user->hasRole('admin');
+    return is_null($user->company_id);
 });

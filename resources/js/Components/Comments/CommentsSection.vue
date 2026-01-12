@@ -153,8 +153,8 @@ onUnmounted(() => {
                         <div class="flex items-center gap-2">
                             <p class="text-[10px] text-gray-500">{{ new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</p>
                             
-                            <!-- Action buttons (visible on hover for admin or owner) -->
-                            <div v-if="canEditComment(comment) && editingCommentId !== comment.id" class="hidden group-hover:flex items-center gap-1">
+                            <!-- Action buttons (always visible if authorized) -->
+                            <div v-if="canEditComment(comment) && editingCommentId !== comment.id" class="flex items-center gap-1">
                                 <button @click="startEdit(comment)" class="p-1 text-gray-400 hover:text-brand rounded" title="Editar">
                                     <PencilIcon class="h-3 w-3" />
                                 </button>
