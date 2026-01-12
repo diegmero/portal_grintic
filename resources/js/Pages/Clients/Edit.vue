@@ -35,13 +35,26 @@ const isCreatingUser = ref(false);
 const userForm = useForm({
     name: '',
     email: '',
+    email: '',
     password: '',
+    permissions: [],
 });
+
+const availablePermissions = [
+    { id: 'create_stages', label: 'Crear Etapas' },
+    { id: 'create_tasks', label: 'Crear Tareas' },
+    { id: 'create_subtasks', label: 'Crear Subtareas' },
+    { id: 'create_comments', label: 'Comentar' },
+    { id: 'upload_files', label: 'Subir Archivos' },
+    { id: 'edit_project', label: 'Editar Proyecto (Básico)' },
+    { id: 'view_financials', label: 'Ver Finanzas' },
+];
 
 const createUser = () => {
     editingUser.value = null;
     isCreatingUser.value = true;
     userForm.reset();
+    userForm.permissions = []; // Reset permissions
     userForm.password = ''; // Required for new users
     showPassword.value = false;
     showUserModal.value = true;
@@ -52,6 +65,7 @@ const editUser = (user) => {
     isCreatingUser.value = false;
     userForm.name = user.name;
     userForm.email = user.email;
+    userForm.permissions = user.permissions ? user.permissions.map(p => p.name) : [];
     userForm.password = ''; // Leave empty if not changing
     showUserModal.value = true;
 };
@@ -252,7 +266,22 @@ const generatePassword = () => {
                             </button>
                         </div>
                          <p class="text-xs text-gray-500 mt-1">Mínimo 8 caracteres.</p>
+                         <p class="text-xs text-gray-500 mt-1">Mínimo 8 caracteres.</p>
                         <InputError :message="userForm.errors.password" />
+                    </div>
+
+                    <!-- Permissions Section -->
+                    <div class="border-t border-gray-100 pt-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Permisos de Proyecto</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label v-for="perm in availablePermissions" :key="perm.id" class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input type="checkbox" :value="perm.id" v-model="userForm.permissions" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <span>{{ perm.label }}</span>
+                            </label>
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            Nota: Los usuarios clientes <strong>NUNCA</strong> pueden eliminar registros, independientemente de estos permisos.
+                        </p>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end">

@@ -9,6 +9,11 @@ class TaskMediaController extends Controller
 {
     public function store(Request $request, Task $task)
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('upload_files')) {
+            abort(403, 'No tienes permiso para subir archivos.');
+        }
+
         $request->validate([
             'headers' => 'required|file|max:10240', // 10MB max
         ]);

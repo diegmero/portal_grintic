@@ -13,6 +13,11 @@ class SubtaskController extends Controller
 {
     public function store(StoreSubtaskRequest $request, Task $task, RecalculateProjectProgressAction $recalculateProgress): RedirectResponse
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('create_subtasks')) {
+            abort(403, 'No tienes permiso para crear subtareas.');
+        }
+
         $task->subtasks()->create($request->validated());
 
         // Recalculate progress since subtask count changed
@@ -39,6 +44,10 @@ class SubtaskController extends Controller
 
     public function destroy(Subtask $subtask, RecalculateProjectProgressAction $recalculateProgress): RedirectResponse
     {
+        if (request()->user()->company_id) {
+            abort(403, 'Acción no permitida.');
+        }
+
         $project = $subtask->task->stage->project;
         $subtask->delete();
 

@@ -48,6 +48,11 @@ class TaskController extends Controller
 
     public function store(StoreTaskRequest $request, Stage $stage, RecalculateProjectProgressAction $recalculateProgress): RedirectResponse
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('create_tasks')) {
+            abort(403, 'No tienes permiso para crear tareas.');
+        }
+
         $validated = $request->validated();
         $validated['status'] = TaskStatus::Pending;
         $validated['weight'] = 1.0; // Fixed weight, not user-configurable
@@ -61,6 +66,10 @@ class TaskController extends Controller
 
     public function destroy(Task $task, RecalculateProjectProgressAction $recalculateProgress): RedirectResponse
     {
+        if (request()->user()->company_id) {
+            abort(403, 'Acción no permitida.');
+        }
+
         $project = $task->stage->project;
         $task->delete();
 

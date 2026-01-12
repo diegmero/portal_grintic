@@ -12,6 +12,11 @@ class CommentController extends Controller
 {
     public function store(Request $request)
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('create_comments')) {
+            abort(403, 'No tienes permiso para comentar.');
+        }
+
         $validated = $request->validate([
             'body' => 'required|string',
             'commentable_id' => 'required|uuid',

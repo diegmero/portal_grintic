@@ -11,6 +11,11 @@ class ProjectMediaController extends Controller
 {
     public function store(Request $request, Project $project): RedirectResponse
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('upload_files')) {
+            abort(403, 'No tienes permiso para subir archivos.');
+        }
+
         // Check file limit (max 5 files per project)
         $currentFileCount = $project->getMedia('project_files')->count();
         if ($currentFileCount >= 5) {
@@ -47,6 +52,10 @@ class ProjectMediaController extends Controller
 
     public function destroy(Project $project, string $mediaId): RedirectResponse
     {
+        if (request()->user()->company_id) {
+            abort(403, 'Acción no permitida.');
+        }
+
         $media = $project->media()->findOrFail($mediaId);
         $media->delete();
 

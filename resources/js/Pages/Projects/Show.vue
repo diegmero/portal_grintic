@@ -21,6 +21,8 @@ import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/vue/24/solid
 import CommentsSection from '@/Components/Comments/CommentsSection.vue';
 import TaskDetailSlideOver from '@/Components/Projects/TaskDetailSlideOver.vue';
 import ProjectEditSlideOver from '@/Components/Projects/ProjectEditSlideOver.vue';
+import draggable from 'vuedraggable';
+import { Bars3Icon } from '@heroicons/vue/24/outline'; // Handle icon
 
 const showEditProject = ref(false);
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -77,6 +79,34 @@ const showAddStageModal = ref(false);
 const showEditStageModal = ref(false);
 const stageForm = useForm({ name: '' });
 const editingStage = ref(null);
+
+// Reordering Logic
+const stagesList = ref([]);
+
+watch(() => props.project.stages, (newStages) => {
+    stagesList.value = newStages ? [...newStages] : [];
+}, { immediate: true });
+
+const onReorder = () => {
+    // Optimistic update already happened in UI via v-model
+    // Prepare payload
+    const payload = stagesList.value.map((stage, index) => ({
+        id: stage.id,
+        order: index + 1
+    }));
+
+    router.post(route('stages.reorder', props.project.id), { stages: payload }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+             // Optional: Toast handled globally by backend flash
+        },
+        onError: () => {
+            // Revert on error (optional, for now simple alert)
+            alert('Error al reordenar las etapas. Recarga la página.');
+        }
+    });
+};
 
 const addStage = () => {
     stageForm.post(route('stages.store', props.project.id), {
@@ -477,116 +507,130 @@ const deleteSubtask = (subtaskId) => {
 
                         <!-- Stages -->
                         <div class="space-y-4">
-                            <div v-for="stage in project.stages" :key="stage.id" class="bg-white rounded-lg border border-gray-200">
-                                <!-- Stage Header -->
-                                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-3">
-                                            <span :class="[statusConfig[stage.status]?.class || 'bg-gray-400', 'w-2 h-5 rounded-full']"></span>
-                                            <div>
-                                                <h3 class="font-semibold text-gray-900 text-base">{{ stage.name }}</h3>
-                                                <span class="text-sm text-gray-700">{{ stage.tasks.filter(t => t.status === 'completed').length }}/{{ stage.tasks.length }} tareas</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <!-- Stage Progress -->
-                                            <div class="flex items-center gap-2">
-                                                <div class="w-24 bg-gray-200 rounded-full h-2">
-                                                    <div class="bg-brand h-2 rounded-full transition-all" 
-                                                        :style="{ width: getStageProgress(stage) + '%' }"></div>
+                            <draggable 
+                                v-model="stagesList" 
+                                item-key="id" 
+                                handle=".drag-handle"
+                                @end="onReorder"
+                                class="space-y-4"
+                                ghost-class="opacity-50"
+                            >
+                                <template #item="{ element: stage }">
+                                    <div class="bg-white rounded-lg border border-gray-200">
+                                        <!-- Stage Header -->
+                                        <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
+                                                    <!-- Drag Handle -->
+                                                    <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-200">
+                                                        <Bars3Icon class="h-5 w-5" />
+                                                    </div>
+
+                                                    <span :class="[statusConfig[stage.status]?.class || 'bg-gray-400', 'w-2 h-5 rounded-full']"></span>
+                                                    <div>
+                                                        <h3 class="font-semibold text-gray-900 text-base">{{ stage.name }}</h3>
+                                                        <span class="text-sm text-gray-700">{{ stage.tasks.filter(t => t.status === 'completed').length }}/{{ stage.tasks.length }} tareas</span>
+                                                    </div>
                                                 </div>
-                                                <span class="text-xs font-medium text-gray-600 w-8">
-                                                    {{ getStageProgress(stage) }}%
-                                                </span>
+                                                <div class="flex items-center gap-3">
+                                                    <!-- Stage Progress -->
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-brand h-2 rounded-full transition-all" 
+                                                                :style="{ width: getStageProgress(stage) + '%' }"></div>
+                                                        </div>
+                                                        <span class="text-xs font-medium text-gray-600 w-8">
+                                                            {{ getStageProgress(stage) }}%
+                                                        </span>
+                                                    </div>
+                                                    <!-- Actions -->
+                                                    <div class="flex items-center gap-1">
+                                                        <button @click="openCreateTaskSlideOver(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
+                                                            <PlusIcon class="h-5 w-5" />
+                                                        </button>
+                                                        <label class="p-1.5 text-gray-400 hover:text-brand rounded cursor-pointer" title="Subir Archivo">
+                                                            <ArrowUpTrayIcon class="h-5 w-5" />
+                                                            <input type="file" class="hidden" @change="uploadFileToStage(stage.id, $event)" />
+                                                        </label>
+                                                        <button @click="openEditStageModal(stage)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Editar Etapa">
+                                                            <PencilSquareIcon class="h-5 w-5" />
+                                                        </button>
+                                                        <button @click="deleteStage(stage.id)" class="p-1.5 text-gray-400 hover:text-red-500 rounded" title="Eliminar">
+                                                            <TrashIcon class="h-5 w-5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <!-- Actions -->
-                                            <div class="flex items-center gap-1">
-                                                <button @click="openCreateTaskSlideOver(stage.id)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Agregar Tarea">
-                                                    <PlusIcon class="h-5 w-5" />
+                                        </div>
+
+                                        <!-- Stage Files -->
+                                        <div v-if="stage.media?.length" class="px-4 py-2 bg-blue-50/50 border-b border-gray-100">
+                                            <div class="flex flex-wrap gap-2">
+                                                    <div v-for="file in stage.media" :key="file.id" class="inline-flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200 text-xs group">
+                                                        <PaperClipIcon class="h-3 w-3 text-gray-400" />
+                                                        <button @click="openFilePreview(route('stages.media.show', { stage: stage.id, media: file.id }), file.file_name)" class="text-brand hover:underline max-w-[150px] truncate text-left">
+                                                            {{ file.file_name }}
+                                                        </button>
+                                                    <button @click="deleteStageFile(stage.id, file.id)" class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                                                        <XMarkIcon class="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tasks List -->
+                                        <div class="divide-y divide-gray-50">
+                                            <div 
+                                                v-for="task in stage.tasks" 
+                                                :key="task.id" 
+                                                @click="openTaskSlideOver(task)"
+                                                class="px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 cursor-pointer group transition-colors"
+                                            >
+                                                <!-- Checkbox -->
+                                                <button @click="toggleTask(task, $event)" class="flex-shrink-0 transition-transform hover:scale-110">
+                                                    <CheckCircleIconSolid v-if="task.status === 'completed'" class="h-5 w-5 text-green-500" />
+                                                    <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300 hover:text-green-400" />
                                                 </button>
-                                                <label class="p-1.5 text-gray-400 hover:text-brand rounded cursor-pointer" title="Subir Archivo">
-                                                    <ArrowUpTrayIcon class="h-5 w-5" />
-                                                    <input type="file" class="hidden" @change="uploadFileToStage(stage.id, $event)" />
-                                                </label>
-                                                <button @click="openEditStageModal(stage)" class="p-1.5 text-gray-400 hover:text-brand rounded" title="Editar Etapa">
-                                                    <PencilSquareIcon class="h-5 w-5" />
-                                                </button>
-                                                <button @click="deleteStage(stage.id)" class="p-1.5 text-gray-400 hover:text-red-500 rounded" title="Eliminar">
-                                                    <TrashIcon class="h-5 w-5" />
-                                                </button>
+                                                
+                                                <!-- Task Name & Subtask Badge -->
+                                                <div class="flex-1 min-w-0">
+                                                    <span :class="['text-sm font-medium', task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900']">
+                                                        {{ task.name }}
+                                                    </span>
+                                                    <span v-if="task.has_subtasks && task.subtasks?.length" class="ml-2 text-[10px] text-gray-400">
+                                                        <span class="inline-flex items-center gap-0.5">
+                                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                            </svg>
+                                                            {{ task.subtasks.filter(s => s.is_completed).length }}/{{ task.subtasks.length }}
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <!-- Due Date -->
+                                                <span v-if="task.due_date" :class="[
+                                                    'text-xs px-1.5 py-0.5 rounded',
+                                                    new Date(task.due_date) < new Date() ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
+                                                ]">
+                                                    {{ formatShortDate(task.due_date) }}
+                                                </span>
+
+                                                <!-- Priority Badge -->
+                                                <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-xs font-medium px-1.5 py-0.5 rounded']">
+                                                    {{ priorityConfig[task.priority]?.label || task.priority }}
+                                                </span>
+
+                                                <!-- Arrow indicator -->
+                                                <ChevronRightIcon class="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
+
+                                            <div v-if="stage.tasks.length === 0" class="px-4 py-4 text-center text-xs text-gray-400">
+                                                Sin tareas. <button @click="openCreateTaskSlideOver(stage.id)" class="text-brand hover:underline">Crear primera tarea</button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Stage Files -->
-                                <div v-if="stage.media?.length" class="px-4 py-2 bg-blue-50/50 border-b border-gray-100">
-                                    <div class="flex flex-wrap gap-2">
-                                            <div v-for="file in stage.media" :key="file.id" class="inline-flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200 text-xs group">
-                                                <PaperClipIcon class="h-3 w-3 text-gray-400" />
-                                                <button @click="openFilePreview(route('stages.media.show', { stage: stage.id, media: file.id }), file.file_name)" class="text-brand hover:underline max-w-[150px] truncate text-left">
-                                                    {{ file.file_name }}
-                                                </button>
-                                            <button @click="deleteStageFile(stage.id, file.id)" class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
-                                                <XMarkIcon class="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tasks List -->
-                                <div class="divide-y divide-gray-50">
-                                    <div 
-                                        v-for="task in stage.tasks" 
-                                        :key="task.id" 
-                                        @click="openTaskSlideOver(task)"
-                                        class="px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 cursor-pointer group transition-colors"
-                                    >
-                                        <!-- Checkbox -->
-                                        <button @click="toggleTask(task, $event)" class="flex-shrink-0 transition-transform hover:scale-110">
-                                            <CheckCircleIconSolid v-if="task.status === 'completed'" class="h-5 w-5 text-green-500" />
-                                            <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300 hover:text-green-400" />
-                                        </button>
-                                        
-                                        <!-- Task Name & Subtask Badge -->
-                                        <div class="flex-1 min-w-0">
-                                            <span :class="['text-sm font-medium', task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900']">
-                                                {{ task.name }}
-                                            </span>
-                                            <span v-if="task.has_subtasks && task.subtasks?.length" class="ml-2 text-[10px] text-gray-400">
-                                                <span class="inline-flex items-center gap-0.5">
-                                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                    </svg>
-                                                    {{ task.subtasks.filter(s => s.is_completed).length }}/{{ task.subtasks.length }}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <!-- Due Date -->
-                                        <span v-if="task.due_date" :class="[
-                                            'text-xs px-1.5 py-0.5 rounded',
-                                            new Date(task.due_date) < new Date() ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
-                                        ]">
-                                            {{ formatShortDate(task.due_date) }}
-                                        </span>
-
-                                        <!-- Priority Badge -->
-                                        <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-xs font-medium px-1.5 py-0.5 rounded']">
-                                            {{ priorityConfig[task.priority]?.label || task.priority }}
-                                        </span>
-
-                                        <!-- Arrow indicator -->
-                                        <ChevronRightIcon class="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-
-                                    <div v-if="stage.tasks.length === 0" class="px-4 py-4 text-center text-xs text-gray-400">
-                                        Sin tareas. <button @click="openCreateTaskSlideOver(stage.id)" class="text-brand hover:underline">Crear primera tarea</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="project.stages?.length === 0" class="text-center py-12 bg-white rounded-lg border border-gray-200">
+                                </template>
+                            </draggable>     <div v-if="project.stages?.length === 0" class="text-center py-12 bg-white rounded-lg border border-gray-200">
                                 <p class="text-gray-500 mb-2 text-sm">No hay etapas definidas.</p>
                                 <button @click="showAddStageModal = true" class="text-brand hover:underline text-sm">+ Crear primera etapa</button>
                             </div>

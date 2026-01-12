@@ -31,7 +31,7 @@ class ClientController extends Controller
     public function edit(Company $client): Response
     {
         return Inertia::render('Clients/Edit', [
-            'client' => $client->load('users'),
+            'client' => $client->load('users.permissions'),
         ]);
     }
 
@@ -46,7 +46,10 @@ class ClientController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
         ]);
 
         $user->name = $validated['name'];
@@ -56,7 +59,15 @@ class ClientController extends Controller
             $user->password = Hash::make($validated['password']);
         }
 
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
         $user->save();
+
+        if ($request->has('permissions')) {
+            $user->syncPermissions($request->permissions);
+        }
 
         return redirect()->back()->with('success', 'Usuario actualizado exitosamente.');
     }
@@ -66,7 +77,10 @@ class ClientController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
         ]);
 
         $user = User::create([
@@ -77,6 +91,10 @@ class ClientController extends Controller
         ]);
 
         $user->assignRole('client');
+
+        if ($request->has('permissions')) {
+             $user->syncPermissions($request->permissions);
+        }
 
         return redirect()->back()->with('success', 'Usuario creado exitosamente.');
     }

@@ -72,6 +72,10 @@ class ClientPortalController extends Controller
      */
     public function invoices(): Response
     {
+        if (!Auth::user()->can('view_financials')) {
+            abort(403, 'No tienes permiso para ver facturas.');
+        }
+
         return Inertia::render('Client/Invoices/Index', [
             'invoices' => Invoice::where('company_id', $this->companyId())
                 ->with(['project', 'items'])
@@ -85,6 +89,10 @@ class ClientPortalController extends Controller
      */
     public function showInvoice(Invoice $invoice): Response
     {
+        if (!Auth::user()->can('view_financials')) {
+            abort(403, 'No tienes permiso para ver facturas.');
+        }
+        
         abort_if($invoice->company_id !== $this->companyId(), 403);
 
         return Inertia::render('Client/Invoices/Show', [

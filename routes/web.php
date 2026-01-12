@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/projects/{project}/media/{media}', [\App\Http\Controllers\ProjectMediaController::class, 'destroy'])->name('projects.media.destroy');
 
     // Stage Routes
+    Route::post('/projects/{project}/stages/reorder', [\App\Http\Controllers\StageController::class, 'reorder'])->name('stages.reorder');
     Route::post('/projects/{project}/stages', [\App\Http\Controllers\StageController::class, 'store'])->name('stages.store');
     Route::put('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'update'])->name('stages.update');
     Route::delete('/stages/{stage}', [\App\Http\Controllers\StageController::class, 'destroy'])->name('stages.destroy');

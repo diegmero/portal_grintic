@@ -69,6 +69,11 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project): RedirectResponse
     {
+        // Permission Check for Clients
+        if ($request->user()->company_id && !$request->user()->can('edit_project')) {
+            abort(403, 'No tienes permiso para editar el proyecto.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
