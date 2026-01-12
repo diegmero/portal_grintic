@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\ClientService;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\Stage;
+use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ClientPortalController extends Controller
 {
@@ -40,13 +43,27 @@ class ClientPortalController extends Controller
     {
         abort_if($project->company_id !== $this->companyId(), 403);
 
-        return Inertia::render('ClientPortal/ProjectView', [
+        return Inertia::render('Client/Projects/Show', [
             'project' => $project->load([
                 'company',
+                'stages.media',
                 'stages.tasks.subtasks',
                 'stages.tasks.comments.user',
                 'stages.tasks.media',
+                'stages.tasks.comments.user',
+                'stages.tasks.media',
+                'media', // Project files
+                'invoices', // Project invoices
             ]),
+            'files' => $project->getMedia('project_files')->map(function ($file) {
+                return [
+                    'id' => $file->id,
+                    'file_name' => $file->file_name,
+                    'size' => $file->size,
+                    'mime_type' => $file->mime_type,
+                    // 'original_url' => $file->original_url, 
+                ];
+            }),
         ]);
     }
 
@@ -85,6 +102,31 @@ class ClientPortalController extends Controller
                 ->with(['product'])
                 ->latest()
                 ->get(),
+        ]);
+    }
+
+    /**
+     * Stream a media file for the client (Access Control).
+     */
+    public function showMedia($id)
+    {
+        $media = Media::findOrFail($id);
+        $model = $media->model;
+
+        $authorized = false;
+        if ($model instanceof Project) {
+            $authorized = $model->company_id === $this->companyId();
+        } elseif ($model instanceof Stage) {
+            $authorized = $model->project->company_id === $this->companyId();
+        } elseif ($model instanceof Task) {
+            $authorized = $model->stage->project->company_id === $this->companyId();
+        }
+
+        abort_unless($authorized, 403);
+
+        return response()->file($media->getPath(), [
+            'Content-Type' => $media->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $media->file_name . '"',
         ]);
     }
 }

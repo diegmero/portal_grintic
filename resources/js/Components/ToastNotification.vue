@@ -7,12 +7,21 @@ const show = ref(false);
 const message = ref('');
 const title = ref('Notification');
 
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+
 onMounted(() => {
+    // Only subscribe if user is likely an admin (no company_id) or check roles if available
+    // Prevent clients from hitting 403 on admin channel
+    if (page.props.auth.user.company_id) {
+        return;
+    }
+
     // Listen to admin alerts
     // For custom events with broadcastAs(), use dot prefix
     window.Echo.private('admin.alerts')
         .listen('.ClientActivityDetected', (e) => {
-            console.log('Received admin alert:', e);
             title.value = `Actividad: ${e.client_name}`;
             message.value = e.message;
             show.value = true;

@@ -66,18 +66,13 @@ onMounted(() => {
             echoChannel = window.Echo.private(channelName);
             
             // Listen for the CommentCreated event
-            // Laravel broadcasts as '.CommentCreated' for custom event classes
             echoChannel.listen('.CommentCreated', (e) => {
-                console.log('Received real-time comment:', e);
-                
                 // Check if we already have this comment (prevent duplicates from optimistic UI)
                 const exists = comments.value.some(c => c.id === e.id);
                 if (!exists) {
                     comments.value.push(e);
                 }
             });
-            
-            console.log(`Subscribed to channel: ${channelName}`);
         }
     } catch (error) {
         console.warn('Echo connection failed:', error);

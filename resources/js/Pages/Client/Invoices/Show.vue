@@ -53,7 +53,7 @@ const printInvoice = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-4">
                     <Link :href="route('portal.invoices')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <ArrowLeftIcon class="h-5 w-5 text-gray-500" />

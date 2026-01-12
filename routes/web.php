@@ -92,6 +92,7 @@ Route::prefix('portal')
         Route::get('/invoices', [\App\Http\Controllers\ClientPortalController::class, 'invoices'])->name('invoices');
         Route::get('/invoices/{invoice}', [\App\Http\Controllers\ClientPortalController::class, 'showInvoice'])->name('invoices.show');
         Route::get('/services', [\App\Http\Controllers\ClientPortalController::class, 'services'])->name('services');
+        Route::get('/media/{media}', [\App\Http\Controllers\ClientPortalController::class, 'showMedia'])->name('media.show');
     });
 
 require __DIR__.'/auth.php';

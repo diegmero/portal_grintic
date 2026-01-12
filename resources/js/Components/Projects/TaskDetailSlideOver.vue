@@ -19,6 +19,10 @@ const props = defineProps({
     show: Boolean,
     task: Object,         // null = create mode
     stageId: String,      // required for create mode
+    readOnly: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const emit = defineEmits(['close', 'created']);
@@ -233,10 +237,14 @@ const deleteTask = () => {
                                         </template>
                                         <!-- Edit mode: show completion toggle -->
                                         <template v-else>
-                                            <button @click="toggleTaskStatus" class="flex-shrink-0 transition-transform hover:scale-110">
+                                            <button v-if="!readOnly" @click="toggleTaskStatus" class="flex-shrink-0 transition-transform hover:scale-110">
                                                 <CheckCircleIconSolid v-if="task?.status === 'completed'" class="h-7 w-7 text-green-500" />
                                                 <CheckCircleIconOutline v-else class="h-7 w-7 text-gray-300 hover:text-green-400" />
                                             </button>
+                                            <div v-else class="flex-shrink-0">
+                                                 <CheckCircleIconSolid v-if="task?.status === 'completed'" class="h-7 w-7 text-green-500" />
+                                                 <CheckCircleIconOutline v-else class="h-7 w-7 text-gray-300" />
+                                            </div>
                                             <div>
                                                 <span :class="[statusConfig[task?.status]?.class || 'bg-gray-100 text-gray-700', 'text-xs font-medium px-2 py-0.5 rounded-full']">
                                                     {{ statusConfig[task?.status]?.label || task?.status }}
@@ -245,7 +253,7 @@ const deleteTask = () => {
                                         </template>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <button v-if="!isCreateMode" @click="deleteTask" class="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <button v-if="!isCreateMode && !readOnly" @click="deleteTask" class="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors">
                                             <TrashIcon class="h-5 w-5" />
                                         </button>
                                         <button @click="$emit('close')" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
@@ -262,10 +270,11 @@ const deleteTask = () => {
                                         <div>
                                             <input 
                                                 v-model="form.name" 
-                                                @blur="saveField('name')"
-                                                @keyup.enter="saveField('name')"
+                                                @blur="!readOnly && saveField('name')"
+                                                @keyup.enter="!readOnly && saveField('name')"
+                                                :readonly="readOnly"
                                                 type="text"
-                                                class="w-full text-xl font-semibold text-gray-900 border-0 p-0 focus:ring-0 placeholder-gray-400"
+                                                class="w-full text-xl font-semibold text-gray-900 border-0 p-0 focus:ring-0 placeholder-gray-400 disabled:bg-transparent"
                                                 placeholder="Nombre de la tarea"
                                             />
                                         </div>
@@ -278,13 +287,18 @@ const deleteTask = () => {
                                                 <input 
                                                     type="date"
                                                     v-model="form.due_date"
-                                                    @change="saveField('due_date')"
-                                                    class="text-sm border-0 bg-transparent p-0 focus:ring-0 text-gray-700"
+                                                    @change="!readOnly && saveField('due_date')"
+                                                    :readonly="readOnly"
+                                                    class="text-sm border-0 bg-transparent p-0 focus:ring-0 text-gray-700 disabled:cursor-not-allowed"
                                                 />
                                             </div>
 
                                             <!-- Priority -->
-                                            <Dropdown align="left" width="48">
+                                            <div v-if="readOnly" class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 cursor-default">
+                                                <FlagIcon :class="['h-4 w-4', priorityConfig[form.priority]?.flagClass || 'text-gray-400']" />
+                                                <span class="text-sm text-gray-700 font-medium">{{ priorityConfig[form.priority]?.label || 'Prioridad' }}</span>
+                                            </div>
+                                            <Dropdown v-else align="left" width="48">
                                                 <template #trigger>
                                                     <button class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 hover:bg-gray-100 transition-colors w-full sm:w-auto justify-between sm:justify-start group">
                                                         <FlagIcon :class="['h-4 w-4', priorityConfig[form.priority]?.flagClass || 'text-gray-400']" />
@@ -313,7 +327,8 @@ const deleteTask = () => {
                                                     type="checkbox" 
                                                     v-model="form.has_subtasks"
                                                     @change="saveField('has_subtasks')"
-                                                    class="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded"
+                                                    :disabled="readOnly"
+                                                    class="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded disabled:opacity-50"
                                                 />
                                                 <span class="text-sm text-gray-700">Con subtareas</span>
                                             </label>
@@ -324,9 +339,10 @@ const deleteTask = () => {
                                             <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Descripción</label>
                                             <textarea 
                                                 v-model="form.description"
-                                                @blur="saveField('description')"
+                                                @blur="!readOnly && saveField('description')"
+                                                :readonly="readOnly"
                                                 rows="3"
-                                                class="w-full text-sm text-gray-700 border border-gray-200 rounded-lg p-3 focus:border-brand focus:ring-1 focus:ring-brand resize-none"
+                                                class="w-full text-sm text-gray-700 border border-gray-200 rounded-lg p-3 focus:border-brand focus:ring-1 focus:ring-brand resize-none disabled:bg-transparent disabled:resize-none"
                                                 placeholder="Agrega una descripción..."
                                             ></textarea>
                                         </div>
@@ -350,10 +366,14 @@ const deleteTask = () => {
                                                     :key="subtask.id" 
                                                     class="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-gray-50 group transition-colors"
                                                 >
-                                                    <button @click="toggleSubtask(subtask)" class="flex-shrink-0">
+                                                    <button v-if="!readOnly" @click="toggleSubtask(subtask)" class="flex-shrink-0">
                                                         <CheckCircleIconSolid v-if="subtask.is_completed" class="h-5 w-5 text-green-500" />
                                                         <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300 hover:text-green-400" />
                                                     </button>
+                                                    <div v-else class="flex-shrink-0">
+                                                         <CheckCircleIconSolid v-if="subtask.is_completed" class="h-5 w-5 text-green-500" />
+                                                         <CheckCircleIconOutline v-else class="h-5 w-5 text-gray-300" />
+                                                    </div>
                                                     
                                                     <template v-if="editingSubtask === subtask.id">
                                                         <input 
@@ -365,10 +385,10 @@ const deleteTask = () => {
                                                         />
                                                     </template>
                                                     <template v-else>
-                                                        <span :class="['text-sm flex-1 cursor-pointer select-none', subtask.is_completed ? 'text-gray-400 line-through' : 'text-gray-700']" @click="startEditSubtask(subtask)">
+                                                        <span :class="['text-sm flex-1 select-none', subtask.is_completed ? 'text-gray-400 line-through' : 'text-gray-700', !readOnly ? 'cursor-pointer' : '']" @click="!readOnly && startEditSubtask(subtask)">
                                                             {{ subtask.name }}
                                                         </span>
-                                                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div v-if="!readOnly" class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button @click="startEditSubtask(subtask)" class="p-1 text-gray-400 hover:text-brand rounded">
                                                                 <PencilSquareIcon class="h-4 w-4" />
                                                             </button>
@@ -380,7 +400,7 @@ const deleteTask = () => {
                                                 </div>
 
                                                 <!-- Add Subtask -->
-                                                <div class="flex items-center gap-2 py-2 px-2">
+                                                <div v-if="!readOnly" class="flex items-center gap-2 py-2 px-2">
                                                     <PlusIcon class="h-5 w-5 text-gray-300" />
                                                     <input 
                                                         v-model="newSubtaskName"
