@@ -326,7 +326,7 @@ const deleteSubtask = (subtaskId) => {
                                 </div>
                                 <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Entrega</span>
-                                    <span class="text-gray-900">{{ formatDate(project.due_date) }}</span>
+                                    <span class="text-gray-900">{{ formatDate(project.end_date) }}</span>
                                 </div>
                                 <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Etapas</span>

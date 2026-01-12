@@ -172,7 +172,7 @@ const projectFiles = computed(() => props.files || []);
                                         <span class="text-gray-500 flex items-center gap-1">
                                             <CalendarIcon class="w-3.5 h-3.5" /> Entrega
                                         </span>
-                                        <span class="text-gray-900 font-medium">{{ formatDate(project.due_date) }}</span>
+                                        <span class="text-gray-900 font-medium">{{ formatDate(project.end_date) }}</span>
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-gray-500 flex items-center gap-1">

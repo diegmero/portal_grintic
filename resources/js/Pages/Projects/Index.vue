@@ -180,8 +180,8 @@ const filteredProjects = computed(() => {
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                     <div class="text-xs">
                                         <div v-if="project.start_date">Inicio: {{ formatDate(project.start_date) }}</div>
-                                        <div v-if="project.due_date" class="text-gray-400">Entrega: {{ formatDate(project.due_date) }}</div>
-                                        <div v-if="!project.start_date && !project.due_date" class="text-gray-400 italic">Sin fechas</div>
+                                        <div v-if="project.end_date" class="text-gray-400">Entrega: {{ formatDate(project.end_date) }}</div>
+                                        <div v-if="!project.start_date && !project.end_date" class="text-gray-400 italic">Sin fechas</div>
                                     </div>
                                 </td>
                                 <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
