@@ -23,7 +23,7 @@ const form = useForm({
     description: '',
     status: 'active',
     start_date: '',
-    due_date: '',
+    end_date: '',
     price: '',
 });
 
@@ -174,14 +174,14 @@ const submit = () => {
                                                 <InputError :message="form.errors.start_date" class="mt-2" />
                                             </div>
                                             <div>
-                                                <InputLabel for="due_date" value="Fecha Entrega" />
+                                                <InputLabel for="end_date" value="Fecha Entrega" />
                                                 <CustomDatePicker 
-                                                    id="due_date" 
-                                                    v-model="form.due_date" 
+                                                    id="end_date" 
+                                                    v-model="form.end_date" 
                                                     placeholder="Sin fecha" 
                                                     class="mt-1"
                                                 />
-                                                <InputError :message="form.errors.due_date" class="mt-2" />
+                                                <InputError :message="form.errors.end_date" class="mt-2" />
                                             </div>
                                         </div>
                                     </div>
