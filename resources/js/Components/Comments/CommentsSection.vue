@@ -11,8 +11,9 @@ const props = defineProps({
 
 const comments = ref([...props.initialComments]);
 const currentUser = usePage().props.auth.user;
+const isAdmin = !currentUser?.company_id;
 const canCreateComments = computed(() => {
-    return currentUser?.permissions?.some(p => p.name === 'create_comments') || false;
+    return isAdmin || currentUser?.permissions?.some(p => p.name === 'create_comments') || false;
 });
 
 // Watch for prop changes (when Inertia reloads the page)

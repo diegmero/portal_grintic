@@ -113,9 +113,10 @@ const closeFilePreview = () => {
 // Files Organizing
 const projectFiles = computed(() => props.files || []);
 
-// Permission Helpers
+// Permission Helpers - Admin users (no company_id) bypass all permission checks
 const page = usePage();
-const can = (permission) => page.props.auth.user?.permissions?.some(p => p.name === permission) || false;
+const isAdmin = !page.props.auth.user?.company_id;
+const can = (permission) => isAdmin || page.props.auth.user?.permissions?.some(p => p.name === permission) || false;
 
 // --- Project Edit ---
 const showEditProject = ref(false);
@@ -482,7 +483,7 @@ const uploadFileToStage = (stageId, event) => {
         <ProjectEditSlideOver 
             :show="showEditProject" 
             :project="project"
-            :is-client="true"
+            :is-client="!isAdmin"
             @close="showEditProject = false"
             @preview-file="(file) => openFilePreview(route('portal.media.show', file.id), file.file_name)"
         />

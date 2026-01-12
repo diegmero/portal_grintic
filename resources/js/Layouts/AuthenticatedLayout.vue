@@ -6,7 +6,8 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon } from '@heroicons/vue/24/outline';
+import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
 const showCommandPalette = ref(false);
@@ -135,10 +136,7 @@ onUnmounted(() => {
                          </div>
                     </div>
                     <div class="flex items-center gap-x-4 lg:gap-x-6">
-                        <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
-                            <span class="sr-only">View notifications</span>
-                            <BellIcon class="h-6 w-6" aria-hidden="true" />
-                        </button>
+                        <NotificationDropdown />
 
                         <!-- Profile Dropdown -->
                         <div class="relative">
