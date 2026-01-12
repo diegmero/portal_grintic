@@ -23,10 +23,10 @@ class CommentCreated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         // Broadcast to the specific task/stage channel. 
-        // For simplicity, we'll use a channel for the whole project or just the specific model.
-        // Let's use: comments.{type}.{id}
+        // Sanitize type name: replace backslashes with dots (Pusher doesn't allow backslashes)
+        $sanitizedType = str_replace('\\', '.', $this->comment->commentable_type);
         return [
-            new PrivateChannel('comments.' . $this->comment->commentable_type . '.' . $this->comment->commentable_id),
+            new PrivateChannel('comments.' . $sanitizedType . '.' . $this->comment->commentable_id),
         ];
     }
 

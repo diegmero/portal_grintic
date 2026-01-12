@@ -78,4 +78,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
 });
 
+// Client Portal Routes (isolated from admin routes)
+Route::prefix('portal')
+    ->middleware(['auth', \App\Http\Middleware\EnsureClientAccess::class])
+    ->name('portal.')
+    ->group(function () {
+        Route::get('/projects', [\App\Http\Controllers\ClientPortalController::class, 'projects'])->name('projects');
+        Route::get('/projects/{project}', [\App\Http\Controllers\ClientPortalController::class, 'showProject'])->name('projects.show');
+        Route::get('/invoices', [\App\Http\Controllers\ClientPortalController::class, 'invoices'])->name('invoices');
+        Route::get('/invoices/{invoice}', [\App\Http\Controllers\ClientPortalController::class, 'showInvoice'])->name('invoices.show');
+        Route::get('/services', [\App\Http\Controllers\ClientPortalController::class, 'services'])->name('services');
+    });
+
 require __DIR__.'/auth.php';

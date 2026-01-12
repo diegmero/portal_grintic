@@ -29,11 +29,25 @@ const navigation = computed(() => {
         nav.push({ name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') });
     }
 
-    nav.push({ name: isClient.value ? 'Mis Proyectos' : 'Proyectos', href: route('projects.index'), icon: FolderIcon, current: route().current('projects.*') });
-    nav.push({ name: isClient.value ? 'Mis Finanzas' : 'Finanzas', href: route('invoices.index'), icon: CurrencyDollarIcon, current: route().current('invoices.*') });
+    // Use portal routes for clients, admin routes for admins
+    nav.push({ 
+        name: isClient.value ? 'Mis Proyectos' : 'Proyectos', 
+        href: isClient.value ? route('portal.projects') : route('projects.index'), 
+        icon: FolderIcon, 
+        current: isClient.value ? route().current('portal.projects*') : route().current('projects.*') 
+    });
+    nav.push({ 
+        name: isClient.value ? 'Mis Finanzas' : 'Finanzas', 
+        href: isClient.value ? route('portal.invoices') : route('invoices.index'), 
+        icon: CurrencyDollarIcon, 
+        current: isClient.value ? route().current('portal.invoices*') : route().current('invoices.*') 
+    });
     
     if (!isClient.value) {
         nav.push({ name: 'Productos', href: route('products.index'), icon: CubeIcon, current: route().current('products.*') || route().current('services.*') });
+    } else {
+        // Client can see their services
+        nav.push({ name: 'Mis Servicios', href: route('portal.services'), icon: CubeIcon, current: route().current('portal.services') });
     }
 
     return nav;

@@ -25,13 +25,23 @@ class CommentController extends Controller
             'commentable_type' => $validated['commentable_type'],
         ]);
 
-        broadcast(new CommentCreated($comment->load('user')))->toOthers();
+        // Broadcast to other users (optional - won't fail if Pusher/Reverb is not running)
+        try {
+            broadcast(new CommentCreated($comment->load('user')))->toOthers();
+        } catch (\Exception $e) {
+            // Silently fail if broadcast server is not available
+            \Log::warning('Broadcasting failed: ' . $e->getMessage());
+        }
 
         if ($request->user()->hasRole('client')) {
-            event(new \App\Events\ClientActivityDetected(
-                "Cliente comentó en: {$validated['commentable_type']} #{$validated['commentable_id']}",
-                $request->user()
-            ));
+            try {
+                event(new \App\Events\ClientActivityDetected(
+                    "Cliente comentó en: {$validated['commentable_type']} #{$validated['commentable_id']}",
+                    $request->user()
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Client activity broadcast failed: ' . $e->getMessage());
+            }
         }
 
         return back();

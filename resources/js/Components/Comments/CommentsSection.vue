@@ -50,8 +50,9 @@ const submit = () => {
 };
 
 onMounted(() => {
-    // Echo Listener
-    window.Echo.private(`comments.${props.commentableType}.${props.commentableId}`)
+    // Echo Listener - sanitize channel name (Pusher doesn't allow backslashes)
+    const sanitizedType = props.commentableType.replace(/\\/g, '.');
+    window.Echo.private(`comments.${sanitizedType}.${props.commentableId}`)
         .listen('CommentCreated', (e) => {
             // Check if we already have this comment (from optimistic UI)
             // Ideally we check by ID, but optimistic ID is temp. 
