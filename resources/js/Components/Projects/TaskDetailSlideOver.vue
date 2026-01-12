@@ -260,7 +260,6 @@ const deleteTask = () => {
                                             </div>
                                         </template>
                                     </div>
-                                    </div>
                                     <div class="flex items-center gap-2">
                                         <button v-if="!isCreateMode && !readOnly && canDelete" @click="deleteTask" class="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors">
                                             <TrashIcon class="h-5 w-5" />
