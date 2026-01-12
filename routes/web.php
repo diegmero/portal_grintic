@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
 
     // Comments
     Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
+    Route::patch('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
 
     // Project Additionals
     Route::post('/projects/{project}/additionals', [\App\Http\Controllers\ProjectAdditionalController::class, 'store'])->name('project-additionals.store');

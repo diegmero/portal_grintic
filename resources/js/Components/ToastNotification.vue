@@ -13,9 +13,8 @@ import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 
 onMounted(() => {
-    // Only subscribe if user is an admin
-    // Check using the shared roles prop
-    const isAdmin = page.props.auth.user.roles.some(role => role.name === 'admin');
+    // Only subscribe if user is an admin (no company_id means admin)
+    const isAdmin = !page.props.auth.user?.company_id;
     
     if (!isAdmin) {
         return;

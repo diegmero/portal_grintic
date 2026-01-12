@@ -4,7 +4,7 @@ import { BellIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
-const isAdmin = computed(() => page.props.auth.user?.roles?.some(role => role.name === 'admin'));
+const isAdmin = computed(() => !page.props.auth.user?.company_id);
 
 const showDropdown = ref(false);
 const notifications = ref([]);

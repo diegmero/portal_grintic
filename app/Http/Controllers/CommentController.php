@@ -71,4 +71,35 @@ class CommentController extends Controller
 
         return back();
     }
+
+    public function update(Request $request, Comment $comment)
+    {
+        // Only admin or comment owner can edit
+        $isAdmin = !$request->user()->company_id;
+        $isOwner = $comment->user_id === $request->user()->id;
+        
+        if (!$isAdmin && !$isOwner) {
+            abort(403, 'No tienes permiso para editar este comentario.');
+        }
+
+        $validated = $request->validate([
+            'body' => 'required|string',
+        ]);
+
+        $comment->update(['body' => $validated['body']]);
+
+        return back()->with('success', 'Comentario actualizado.');
+    }
+
+    public function destroy(Request $request, Comment $comment)
+    {
+        // Only admin can delete comments
+        if ($request->user()->company_id) {
+            abort(403, 'No tienes permiso para eliminar comentarios.');
+        }
+
+        $comment->delete();
+
+        return back()->with('success', 'Comentario eliminado.');
+    }
 }
