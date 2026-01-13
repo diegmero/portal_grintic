@@ -82,6 +82,11 @@ Route::middleware('auth')->group(function () {
     // Products Catalog
     Route::resource('products', \App\Http\Controllers\ProductController::class)->only(['index', 'store', 'update', 'destroy']);
 
+    // Notifications
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+    Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+
     // Client Services
     Route::get('/clients/{client}/active-services', [\App\Http\Controllers\ClientServiceController::class, 'getActiveServices'])->name('clients.services.active');
     Route::resource('services', \App\Http\Controllers\ClientServiceController::class);

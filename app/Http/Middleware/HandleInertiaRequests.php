@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $request->user()->getAllPermissions()->map(fn($p) => ['name' => $p->name]),
                     'roles' => $request->user()->roles->map(fn($r) => ['name' => $r->name]),
                 ]) : null,
-                'notifications' => $request->user() ? $request->user()->unreadNotifications()->limit(20)->get() : [],
+                'notifications' => $request->user() ? $request->user()->notifications()->latest()->limit(20)->get() : [],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { BellIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 
 const page = usePage();
 const isAdmin = computed(() => !page.props.auth.user?.company_id);
@@ -12,15 +12,20 @@ const unreadCount = computed(() => notifications.value.filter(n => !n.read).leng
 
 const markAsRead = (id) => {
     const notification = notifications.value.find(n => n.id === id);
-    if (notification) notification.read = true;
+    if (notification) {
+        notification.read = true;
+        router.post(route('notifications.read', id), {}, { preserveScroll: true, preserveState: true });
+    }
 };
 
 const markAllAsRead = () => {
     notifications.value.forEach(n => n.read = true);
+    router.post(route('notifications.readAll'), {}, { preserveScroll: true, preserveState: true });
 };
 
 const clearAll = () => {
     notifications.value = [];
+    router.delete(route('notifications.destroy'), { preserveScroll: true, preserveState: true });
 };
 
 const formatTime = (date) => {
@@ -73,18 +78,20 @@ onMounted(() => {
         <button 
             type="button" 
             @click="showDropdown = !showDropdown"
-            class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 relative"
+            class="p-2.5 text-gray-400 hover:text-gray-500"
         >
             <span class="sr-only">Ver notificaciones</span>
-            <BellIcon class="h-6 w-6" aria-hidden="true" />
-            
-            <!-- Unread Badge -->
-            <span 
-                v-if="unreadCount > 0" 
-                class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full"
-            >
-                {{ unreadCount > 9 ? '9+' : unreadCount }}
-            </span>
+            <div class="relative">
+                <BellIcon class="h-6 w-6" aria-hidden="true" />
+                
+                <!-- Unread Badge -->
+                <span 
+                    v-if="unreadCount > 0" 
+                    class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full ring-2 ring-white"
+                >
+                    {{ unreadCount > 9 ? '9+' : unreadCount }}
+                </span>
+            </div>
         </button>
 
         <!-- Dropdown Panel -->
