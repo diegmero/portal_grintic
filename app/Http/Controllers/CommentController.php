@@ -7,6 +7,9 @@ use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewCommentNotification;
+use App\Notifications\CommentActivityNotification;
 
 class CommentController extends Controller
 {
@@ -50,63 +53,55 @@ class CommentController extends Controller
                     $contextName = $commentable->name ?? $commentable->title ?? 'elemento';
                 }
                 
-                // Type label
+                // Context
                 $typeLabel = match($validated['commentable_type']) {
                     'App\\Models\\Task' => 'tarea',
                     'App\\Models\\Stage' => 'etapa',
                     default => 'elemento'
                 };
+                $context = ['type_label' => $typeLabel, 'name' => $contextName];
 
-                // Send the actual comment in the notification
-                $message = "💬 Comentario en {$typeLabel} \"{$contextName}\": \"{$validated['body']}\"";
-                
-                event(new \App\Events\ClientActivityDetected(
-                    $message,
-                    $request->user()
-                ));
+                $admins = \App\Models\User::whereNull('company_id')->get();
+                if ($admins->count() > 0) {
+                     Notification::send($admins, new \App\Notifications\NewCommentNotification($comment, $request->user(), $context));
+                }
+
             } catch (\Exception $e) {
-                \Log::warning('Client activity broadcast failed: ' . $e->getMessage());
+                \Log::warning('Client notification failed: ' . $e->getMessage());
             }
         } else {
-            // Logic for Admin commenting -> Notify Client
+            // Logic for Admin commenting -> Notify Client Users
              try {
-                // Get the commentable entity for context
+                // Get commentable
                 $commentableClass = $validated['commentable_type'];
                 $commentable = $commentableClass::find($validated['commentable_id']);
                 
                 // Determine company_id to notify
                 $companyId = null;
-                // Try to traverse to project/company
                 if ($commentable) {
-                    if (method_exists($commentable, 'project')) {
-                        // Task/Projec relationship
-                        $companyId = $commentable->project->company_id ?? null;
-                    } elseif ($commentable instanceof \App\Models\Project) {
-                         $companyId = $commentable->company_id ?? null;
-                    }
-                     // If stage process to project
-                     if ($validated['commentable_type'] === 'App\\Models\\Stage' && $commentable->project) {
-                         $companyId = $commentable->project->company_id;
-                     }
-                     // If task process to stage -> project
-                      if ($validated['commentable_type'] === 'App\\Models\\Task' && $commentable->stage && $commentable->stage->project) {
-                         $companyId = $commentable->stage->project->company_id;
-                     }
+                    if (method_exists($commentable, 'project')) { $companyId = $commentable->project->company_id ?? null; }
+                    elseif ($commentable instanceof \App\Models\Project) { $companyId = $commentable->company_id ?? null; }
+                    if ($validated['commentable_type'] === 'App\\Models\\Stage' && $commentable->project) { $companyId = $commentable->project->company_id; }
+                    if ($validated['commentable_type'] === 'App\\Models\\Task' && $commentable->stage && $commentable->stage->project) { $companyId = $commentable->stage->project->company_id; }
                 }
 
                 if ($companyId) {
-                     // We need a generic notification event for clients. 
-                     // For now, let's reuse ClientActivityDetected but directed to client channel?
-                     // Or better, create a simple ClientNotification event.
-                     // Let's use a new event: AdminResponseDetected
-                     event(new \App\Events\AdminResponseDetected(
-                        "Tienes un nuevo comentario de Admin",
-                        $companyId
-                     ));
+                     // Get type label
+                     $typeLabel = match($validated['commentable_type']) {
+                        'App\\Models\\Task' => 'tarea',
+                        'App\\Models\\Stage' => 'etapa',
+                        default => 'elemento'
+                    };
+                    $contextName = $commentable->name ?? $commentable->title ?? 'elemento';
+                    $context = ['type_label' => $typeLabel, 'name' => $contextName];
+                    
+                    $clientUsers = \App\Models\User::where('company_id', $companyId)->get();
+                    if ($clientUsers->count() > 0) {
+                        Notification::send($clientUsers, new \App\Notifications\NewCommentNotification($comment, $request->user(), $context));
+                    }
                 }
-
             } catch (\Exception $e) {
-                \Log::warning('Admin response broadcast failed: ' . $e->getMessage());
+                \Log::warning('Admin notification failed: ' . $e->getMessage());
             }
         }
 
@@ -126,15 +121,15 @@ class CommentController extends Controller
         $validated = $request->validate([
             'body' => 'required|string',
         ]);
+        $comment->update(['body' => $validated['body']]);
 
         try {
             broadcast(new \App\Events\CommentUpdated($comment))->toOthers();
 
-            // Notify about update
+            // Notification Logic using Laravel Notifications (Database + Broadcast)
             $user = $request->user();
-            $message = "📝 Comentario editado en {$comment->commentable_type}"; // Simplified message
             
-            // Build Context (reused logic)
+            // Reused context logic
             $commentable = $comment->commentable;
             $typeLabel = match($comment->commentable_type) {
                 'App\\Models\\Task' => 'tarea',
@@ -142,13 +137,17 @@ class CommentController extends Controller
                 default => 'elemento'
             };
             $contextName = $commentable->name ?? $commentable->title ?? 'elemento';
-            $message = "📝 Comentario editado en {$typeLabel} \"{$contextName}\"";
+            
+            $context = ['type_label' => $typeLabel, 'name' => $contextName];
 
             if ($user->company_id) {
-                // Client edited -> Notify Admin
-                 event(new \App\Events\ClientActivityDetected($message, $user));
+                 // Client edited -> Notify Admins
+                 $admins = \App\Models\User::whereNull('company_id')->get();
+                 if ($admins->count() > 0) {
+                     Notification::send($admins, new CommentActivityNotification('updated', $user, $context, $validated['body']));
+                 }
             } else {
-                // Admin edited -> Notify Client
+                // Admin edited -> Notify Client Users
                 $companyId = null;
                 if ($commentable) {
                      if (method_exists($commentable, 'project')) { $companyId = $commentable->project->company_id ?? null; }
@@ -158,11 +157,14 @@ class CommentController extends Controller
                 }
 
                 if ($companyId) {
-                    event(new \App\Events\AdminResponseDetected("Admin editó un comentario en {$typeLabel}: \"{$contextName}\"", $companyId));
+                    $clientUsers = \App\Models\User::where('company_id', $companyId)->get();
+                    if ($clientUsers->count() > 0) {
+                        Notification::send($clientUsers, new CommentActivityNotification('updated', $user, $context, $validated['body']));
+                    }
                 }
             }
         } catch (\Exception $e) {
-            \Log::warning('Broadcasting failed: ' . $e->getMessage());
+            \Log::warning('Notification failed: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Comentario actualizado.');
@@ -178,19 +180,19 @@ class CommentController extends Controller
         $id = $comment->id;
         $type = $comment->commentable_type;
         $commentableId = $comment->commentable_id;
+        $bodyForNotification = $comment->body; // Capture body before delete
+        $user = $request->user(); // Admin
 
         $comment->delete();
 
         try {
             broadcast(new \App\Events\CommentDeleted($id, $type, $commentableId))->toOthers();
 
-             // Notify Client about deletion (Only admins delete)
-             // Reconstruct context
+             // Notify Client about deletion
              $commentableClass = $type;
              $commentable = $commentableClass::find($commentableId);
              
              if ($commentable) {
-                // Determine logic for company ID
                 $companyId = null;
                 if (method_exists($commentable, 'project')) { $companyId = $commentable->project->company_id ?? null; }
                 elseif ($commentable instanceof \App\Models\Project) { $companyId = $commentable->company_id ?? null; }
@@ -203,14 +205,18 @@ class CommentController extends Controller
                     default => 'elemento'
                 };
                 $contextName = $commentable->name ?? $commentable->title ?? 'elemento';
+                $context = ['type_label' => $typeLabel, 'name' => $contextName];
 
                 if ($companyId) {
-                    event(new \App\Events\AdminResponseDetected("Admin eliminó un comentario en {$typeLabel}: \"{$contextName}\"", $companyId));
+                    $clientUsers = \App\Models\User::where('company_id', $companyId)->get();
+                    if ($clientUsers->count() > 0) {
+                        Notification::send($clientUsers, new CommentActivityNotification('deleted', $user, $context, $bodyForNotification));
+                    }
                 }
              }
 
         } catch (\Exception $e) {
-            \Log::warning('Broadcasting failed: ' . $e->getMessage());
+            \Log::warning('Notification failed: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Comentario eliminado.');

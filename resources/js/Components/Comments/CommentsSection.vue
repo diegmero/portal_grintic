@@ -112,21 +112,18 @@ onMounted(() => {
             
             // Listen for the CommentCreated event
             echoChannel.listen('.CommentCreated', (e) => {
-                console.log('Event received: CommentCreated', e);
                 const exists = comments.value.some(c => c.id === e.id);
                 if (!exists) {
                     comments.value.push(e);
                 }
             })
             .listen('.CommentUpdated', (e) => {
-                console.log('Event received: CommentUpdated', e);
                 const index = comments.value.findIndex(c => c.id === e.id);
                 if (index !== -1) {
                     comments.value[index].body = e.body;
                 }
             })
             .listen('.CommentDeleted', (e) => {
-                console.log('Event received: CommentDeleted', e);
                 comments.value = comments.value.filter(c => c.id !== e.id);
             });
         }

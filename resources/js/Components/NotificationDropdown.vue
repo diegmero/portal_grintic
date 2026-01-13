@@ -38,28 +38,32 @@ const formatTime = (date) => {
 };
 
 onMounted(() => {
-    if (!isAdmin.value) return;
-    
-    try {
-        if (window.Echo) {
-            window.Echo.private('admin.alerts')
-                .listen('.ClientActivityDetected', (e) => {
-                    notifications.value.unshift({
-                        id: Date.now(),
-                        title: `Actividad: ${e.client_name}`,
-                        message: e.message,
-                        time: new Date().toISOString(),
-                        read: false,
-                    });
-                    
-                    // Keep only last 20 notifications
-                    if (notifications.value.length > 20) {
-                        notifications.value = notifications.value.slice(0, 20);
-                    }
+    // 1. Load initial notifications from Inertia props
+    if (page.props.auth.notifications) {
+        notifications.value = page.props.auth.notifications.map(n => ({
+            id: n.id,
+            title: n.data.title || 'Notificación',
+            message: n.data.message || '',
+            time: n.created_at,
+            read: !!n.read_at,
+        }));
+    }
+
+    // 2. Listen for Real-time Notifications (Standard Laravel Channel)
+    const userId = page.props.auth.user?.id;
+    if (userId && window.Echo) {
+        window.Echo.private(`App.Models.User.${userId}`)
+            .notification((notification) => {
+                notifications.value.unshift({
+                    id: notification.id,
+                    title: notification.title,
+                    message: notification.message,
+                    time: new Date().toISOString(),
+                    read: false,
                 });
-        }
-    } catch (error) {
-        console.warn('Echo connection failed:', error);
+                // Limit list size
+                if (notifications.value.length > 20) notifications.value.pop();
+            });
     }
 });
 </script>

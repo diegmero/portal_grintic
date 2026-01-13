@@ -13,30 +13,24 @@ import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 
 onMounted(() => {
-    // Check if user is admin or client
-    const user = page.props.auth.user;
-    const isAdmin = !user?.company_id;
+    const userId = page.props.auth.user?.id;
     
-    if (isAdmin) {
-        // ADMIN LISTENER
-        window.Echo.private('admin.alerts')
-            .listen('.ClientActivityDetected', (e) => {
-                title.value = `Actividad: ${e.client_name ?? 'Cliente'}`;
-                message.value = e.message;
-                type.value = 'info';
+    if (userId && window.Echo) {
+        console.log('Subscribing to notification channel:', `App.Models.User.${userId}`);
+        
+        // Universal Listener for both Admin and Client
+        window.Echo.private(`App.Models.User.${userId}`)
+            .notification((notification) => {
+                console.log('Notification received:', notification);
+                title.value = notification.title || 'Nueva Notificación';
+                message.value = notification.message;
+                type.value = notification.type || 'info';
+                
                 show.value = true;
                 setTimeout(() => { show.value = false; }, 8000);
             });
-    } else if (user?.company_id) {
-        // CLIENT LISTENER
-        window.Echo.private(`client.notifications.${user.company_id}`)
-            .listen('.AdminResponseDetected', (e) => {
-                title.value = 'Nueva Actividad';
-                message.value = e.message;
-                type.value = 'info';
-                show.value = true;
-                setTimeout(() => { show.value = false; }, 8000);
-            });
+    } else {
+        console.warn('Cannot subscribe to notifications: Missing userId or Echo');
     }
 });
 

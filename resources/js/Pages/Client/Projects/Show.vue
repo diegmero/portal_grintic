@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import TaskDetailSlideOver from '@/Components/Projects/TaskDetailSlideOver.vue';
@@ -31,6 +31,14 @@ const props = defineProps({
     files: Array,
 });
 
+// Reactivity for Real-time Updates
+const localProject = ref(props.project);
+
+// Watch for prop changes to keep sync
+watch(() => props.project, (newProject) => {
+    localProject.value = newProject;
+}, { deep: true });
+
 // Ensure route is available
 const route = window.route;
 
@@ -41,7 +49,7 @@ const projectProgress = computed(() => {
     let totalTasks = 0;
     let completedTasks = 0;
     
-    props.project.stages.forEach(stage => {
+    localProject.value.stages.forEach(stage => {
         if (stage.tasks) {
             totalTasks += stage.tasks.length;
             completedTasks += stage.tasks.filter(t => t.status === 'completed').length;
@@ -147,6 +155,42 @@ const openTask = (task) => {
     showSlideOver.value = true;
 };
 
+
+// Echo logic for real-time comment counting
+const echoChannels = [];
+
+onMounted(() => {
+    if (!localProject.value?.stages) return;
+
+    localProject.value.stages.forEach(stage => {
+        if (!stage.tasks) return;
+        
+        stage.tasks.forEach(task => {
+            const channelName = `comments.App.Models.Task.${task.id}`;
+            
+            window.Echo.private(channelName)
+                .listen('.CommentCreated', (e) => {
+                    if (!task.comments) task.comments = [];
+                    // Avoid duplicates
+                    if (!task.comments.some(c => c.id === e.id)) {
+                        task.comments.push(e);
+                    }
+                })
+                .listen('.CommentDeleted', (e) => {
+                    if (task.comments) {
+                        task.comments = task.comments.filter(c => c.id !== e.id);
+                    }
+                });
+            
+            echoChannels.push(channelName);
+        });
+    });
+});
+
+onUnmounted(() => {
+    echoChannels.forEach(channel => window.Echo.leave(channel));
+});
+
 // --- File Upload ---
 const uploadFileToStage = (stageId, event) => {
     const file = event.target.files[0];
@@ -216,7 +260,7 @@ const uploadFileToStage = (stageId, event) => {
                                         statusConfig[project.status]?.text || 'text-gray-800',
                                         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'
                                     ]">
-                                        {{ statusConfig[project.status]?.label || project.status }}
+                                        {{ statusConfig[localProject.status]?.label || localProject.status }}
                                     </span>
                                 </div>
 
@@ -236,20 +280,20 @@ const uploadFileToStage = (stageId, event) => {
                                         <span class="text-gray-500 flex items-center gap-1">
                                             <CalendarIcon class="w-3.5 h-3.5" /> Inicio
                                         </span>
-                                        <span class="text-gray-900 font-medium">{{ formatDate(project.start_date) }}</span>
+                                        <span class="text-gray-900 font-medium">{{ formatDate(localProject.start_date) }}</span>
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-gray-500 flex items-center gap-1">
                                             <CalendarIcon class="w-3.5 h-3.5" /> Entrega
                                         </span>
-                                        <span class="text-gray-900 font-medium">{{ formatDate(project.end_date) }}</span>
+                                        <span class="text-gray-900 font-medium">{{ formatDate(localProject.end_date) }}</span>
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-gray-500 flex items-center gap-1">
                                             <CheckCircleIcon class="w-3.5 h-3.5" /> Tareas Total
                                         </span>
                                         <span class="text-gray-900 font-medium">
-                                            {{ project.stages?.reduce((acc, stage) => acc + (stage.tasks?.length || 0), 0) || 0 }}
+                                            {{ localProject.stages?.reduce((acc, stage) => acc + (stage.tasks?.length || 0), 0) || 0 }}
                                         </span>
                                     </div>
                                 </div>
@@ -287,7 +331,7 @@ const uploadFileToStage = (stageId, event) => {
  
 
                         <!-- 4. Invoices (Moved to Sidebar) -->
-                        <div v-if="project.invoices && project.invoices.length > 0" class="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
+                        <div v-if="localProject.invoices && localProject.invoices.length > 0" class="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
                              <div class="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
                                 <h3 class="text-xs font-semibold text-gray-900 uppercase tracking-wider flex items-center gap-2">
                                     <CurrencyDollarIcon class="h-4 w-4" />
@@ -296,23 +340,23 @@ const uploadFileToStage = (stageId, event) => {
                             </div>
                             
                             <!-- Financial Summary (if price exists) -->
-                            <div v-if="project.price" class="px-4 py-3 bg-white border-b border-gray-100 space-y-1">
+                            <div v-if="localProject.price" class="px-4 py-3 bg-white border-b border-gray-100 space-y-1">
                                 <div class="flex justify-between text-xs">
                                     <span class="text-gray-500">Total</span>
-                                    <span class="font-bold text-gray-900">{{ formatCurrency(project.invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
+                                    <span class="font-bold text-gray-900">{{ formatCurrency(localProject.invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
                                 </div>
                                 <div class="flex justify-between text-xs">
                                      <span class="text-gray-500">Pagado</span>
-                                    <span class="font-medium text-green-600">{{ formatCurrency(project.invoices.filter(i => i.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
+                                    <span class="font-medium text-green-600">{{ formatCurrency(localProject.invoices.filter(i => i.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
                                 </div>
                                  <div class="flex justify-between text-xs">
                                      <span class="text-gray-500">Pendiente</span>
-                                    <span class="font-medium text-red-600">{{ formatCurrency(project.invoices.filter(i => i.status !== 'paid').reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
+                                    <span class="font-medium text-red-600">{{ formatCurrency(localProject.invoices.filter(i => i.status !== 'paid').reduce((sum, inv) => sum + parseFloat(inv.total), 0)) }}</span>
                                 </div>
                             </div>
 
                             <div class="divide-y divide-gray-100">
-                                <div v-for="invoice in project.invoices" :key="invoice.id" class="px-4 py-3 hover:bg-gray-50 transition-colors">
+                                <div v-for="invoice in localProject.invoices" :key="invoice.id" class="px-4 py-3 hover:bg-gray-50 transition-colors">
                                     <div class="flex items-center justify-between mb-1">
                                         <Link :href="route('portal.invoices.show', invoice.id)" class="text-sm font-medium text-brand hover:underline">
                                             {{ invoice.number }}
@@ -347,7 +391,7 @@ const uploadFileToStage = (stageId, event) => {
                             </div>
                             <div class="px-4 py-4">
                                 <div class="text-sm text-gray-600 space-y-2">
-                                    <p class="whitespace-pre-wrap">{{ project.description || 'Sin descripción disponible.' }}</p>
+                                    <p class="whitespace-pre-wrap">{{ localProject.description || 'Sin descripción disponible.' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -369,7 +413,7 @@ const uploadFileToStage = (stageId, event) => {
                                 </button>
                             </div>
                             
-                            <div v-for="stage in project.stages" :key="stage.id" class="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
+                            <div v-for="stage in localProject.stages" :key="stage.id" class="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
                                 <div class="bg-gray-50/80 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                                     <h3 class="text-base font-bold text-gray-900">{{ stage.name }}</h3>
                                     <div class="flex items-center gap-2">
