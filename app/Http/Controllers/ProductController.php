@@ -13,6 +13,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        // Clients CAN view products (Marketplace), but Frontend should hide Edit/Delete buttons.
+        
         $products = Product::query()
             ->when($request->category, fn($q, $category) => $q->where('category', $category))
             ->when($request->type, fn($q, $type) => $q->where('type', $type))
@@ -41,6 +43,10 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->user()->company_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string',
@@ -58,6 +64,10 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        if ($request->user()->company_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string',
@@ -75,6 +85,10 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if (request()->user()->company_id) {
+            abort(403);
+        }
+
         // Check if product has active services
         if ($product->clientServices()->exists()) {
             return back()->with('error', 'No se puede eliminar el producto porque tiene servicios asociados.');
