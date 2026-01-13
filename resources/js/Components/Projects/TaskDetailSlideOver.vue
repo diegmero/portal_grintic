@@ -33,7 +33,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['close', 'created']);
+const emit = defineEmits(['close', 'created', 'comment-created', 'comment-deleted']);
 
 // Create mode detection
 const isCreateMode = computed(() => props.show && !props.task && props.stageId);
@@ -429,6 +429,8 @@ const deleteTask = () => {
                                                 :commentable-id="task.id" 
                                                 commentable-type="App\Models\Task"
                                                 :initial-comments="task?.comments || []" 
+                                                @comment-created="$emit('created', $event); $emit('comment-created', $event)"
+                                                @comment-deleted="$emit('comment-deleted', $event)"
                                             />
                                         </div>
 

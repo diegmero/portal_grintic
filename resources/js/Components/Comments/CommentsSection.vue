@@ -9,6 +9,8 @@ const props = defineProps({
     initialComments: Array,
 });
 
+const emit = defineEmits(['comment-created', 'comment-deleted']);
+
 const comments = ref([...props.initialComments]);
 const currentUser = usePage().props.auth.user;
 const isAdmin = !currentUser?.company_id;
@@ -38,11 +40,13 @@ const submit = () => {
         id: tempId,
         body: form.body,
         user: currentUser,
+        user_id: currentUser?.id, // Fix for immediate edit permission
         created_at: new Date().toISOString(),
         isOptimistic: true,
     };
     
     comments.value.push(newComment);
+    emit('comment-created', newComment);
     
     form.post(route('comments.store'), {
         preserveScroll: true,
@@ -52,43 +56,22 @@ const submit = () => {
         onError: () => {
             // Remove optimistic comment
             comments.value = comments.value.filter(c => c.id !== tempId);
+            emit('comment-deleted', newComment);
         }
     });
 };
 
-// Edit functionality
-const startEdit = (comment) => {
-    editingCommentId.value = comment.id;
-    editingBody.value = comment.body;
-};
-
-const cancelEdit = () => {
-    editingCommentId.value = null;
-    editingBody.value = '';
-};
-
-const saveEdit = (comment) => {
-    router.patch(route('comments.update', comment.id), {
-        body: editingBody.value
-    }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            // Update local state
-            const idx = comments.value.findIndex(c => c.id === comment.id);
-            if (idx !== -1) {
-                comments.value[idx].body = editingBody.value;
-            }
-            cancelEdit();
-        }
-    });
-};
+// ...
 
 const deleteComment = (commentId) => {
     if (confirm('¿Eliminar este comentario?')) {
+        const commentValues = comments.value.find(c => c.id === commentId);
+        
         router.delete(route('comments.destroy', commentId), {
             preserveScroll: true,
             onSuccess: () => {
                 comments.value = comments.value.filter(c => c.id !== commentId);
+                if (commentValues) emit('comment-deleted', commentValues);
             }
         });
     }

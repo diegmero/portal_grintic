@@ -475,16 +475,16 @@ const uploadFileToStage = (stageId, event) => {
                                                     <!-- Metadata Row (Moved) -->
                                                     <div class="flex items-center gap-3 text-xs text-gray-500">
                                                         <div class="flex items-center gap-1">
-                                                            <CalendarIcon class="h-3.5 w-3.5 text-gray-400" />
-                                                            <span>{{ formatDate(task.due_date) }}</span>
+                                                            <CalendarIcon class="h-3.5 w-3.5 text-gray-400 -mt-0.5" />
+                                                            <span class="leading-none pt-0.5">{{ formatDate(task.due_date) }}</span>
                                                         </div>
                                                         <div v-if="task.comments?.length" class="flex items-center gap-1">
                                                             <ChatBubbleLeftIcon class="h-3.5 w-3.5 text-gray-400" />
-                                                            <span>{{ task.comments.length }}</span>
+                                                            <span class="leading-none">{{ task.comments.length }}</span>
                                                         </div>
                                                         <div v-if="task.media?.length" class="flex items-center gap-1">
                                                             <PaperClipIcon class="h-3.5 w-3.5 text-gray-400" />
-                                                            <span>{{ task.media.length }}</span>
+                                                            <span class="leading-none">{{ task.media.length }}</span>
                                                         </div>
                                                     </div>
 
@@ -521,6 +521,13 @@ const uploadFileToStage = (stageId, event) => {
             :can-create-subtasks="can('create_subtasks')"
             :can-delete="false"
             @close="closeSlideOver"
+            @comment-created="(c) => { 
+                if (!selectedTask.comments) selectedTask.comments = []; 
+                selectedTask.comments.push(c); 
+            }"
+            @comment-deleted="(c) => { 
+                if (selectedTask.comments) selectedTask.comments = selectedTask.comments.filter(x => x.id !== c.id); 
+            }"
         />
         
         <!-- Project Edit SlideOver -->

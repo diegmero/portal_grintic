@@ -15,7 +15,10 @@ import {
     ArrowDownTrayIcon,
     ClipboardDocumentListIcon,
     DocumentCurrencyDollarIcon,
-    EyeIcon
+
+    EyeIcon,
+    CalendarIcon,
+    ChatBubbleLeftIcon,
 } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/vue/24/solid';
 import CommentsSection from '@/Components/Comments/CommentsSection.vue';
@@ -607,13 +610,26 @@ const deleteSubtask = (subtaskId) => {
                                                     </span>
                                                 </div>
 
-                                                <!-- Due Date -->
-                                                <span v-if="task.due_date" :class="[
-                                                    'text-xs px-1.5 py-0.5 rounded',
-                                                    new Date(task.due_date) < new Date() ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
-                                                ]">
-                                                    {{ formatShortDate(task.due_date) }}
-                                                </span>
+                                                <!-- Due Date & Metadata -->
+                                                <div class="flex items-center gap-3 text-xs text-gray-500 mr-2">
+                                                    <span v-if="task.due_date" :class="[
+                                                        'flex items-center gap-1 px-1.5 py-0.5 rounded',
+                                                        new Date(task.due_date) < new Date() ? 'bg-red-50 text-red-600' : ''
+                                                    ]">
+                                                        <CalendarIcon class="h-3.5 w-3.5 text-gray-400 -mt-0.5" :class="new Date(task.due_date) < new Date() ? 'text-red-400' : ''" />
+                                                        <span class="leading-none pt-0.5">{{ formatShortDate(task.due_date) }}</span>
+                                                    </span>
+
+                                                    <div v-if="task.comments?.length" class="flex items-center gap-1">
+                                                        <ChatBubbleLeftIcon class="h-3.5 w-3.5 text-gray-400" />
+                                                        <span class="leading-none">{{ task.comments.length }}</span>
+                                                    </div>
+
+                                                    <div v-if="task.media?.length" class="flex items-center gap-1">
+                                                        <PaperClipIcon class="h-3.5 w-3.5 text-gray-400" />
+                                                        <span class="leading-none">{{ task.media.length }}</span>
+                                                    </div>
+                                                </div>
 
                                                 <!-- Priority Badge -->
                                                 <span :class="[priorityConfig[task.priority]?.class || 'bg-gray-100 text-gray-600', 'text-xs font-medium px-1.5 py-0.5 rounded']">
@@ -696,6 +712,13 @@ const deleteSubtask = (subtaskId) => {
             :task="selectedTask" 
             :stage-id="activeStageIdForTask"
             @close="closeTaskSlideOver" 
+            @comment-created="(c) => { 
+                if (!selectedTask.comments) selectedTask.comments = []; 
+                selectedTask.comments.push(c); 
+            }"
+            @comment-deleted="(c) => { 
+                if (selectedTask.comments) selectedTask.comments = selectedTask.comments.filter(x => x.id !== c.id); 
+            }"
         />
 
         <ProjectEditSlideOver 
