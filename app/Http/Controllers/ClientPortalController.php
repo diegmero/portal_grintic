@@ -30,7 +30,9 @@ class ClientPortalController extends Controller
         return Inertia::render('Client/Projects/Index', [
             'projects' => Auth::user()->can('view_projects') 
                 ? Project::where('company_id', $this->companyId())
-                    ->with(['stages.tasks'])
+                    ->with(['stages.tasks' => function ($q) {
+                        $q->withCount(['comments', 'media']);
+                    }])
                     ->withCount(['stages', 'invoices'])
                     ->latest()
                     ->get()
@@ -49,11 +51,9 @@ class ClientPortalController extends Controller
             'project' => $project->load([
                 'company',
                 'stages.media',
-                'stages.tasks.subtasks',
-                'stages.tasks.comments.user',
-                'stages.tasks.media',
-                'stages.tasks.comments.user',
-                'stages.tasks.media',
+                'stages.tasks' => function ($query) {
+                     $query->withCount(['comments', 'media'])->with(['subtasks']);
+                },
                 'media', // Project files
                 'invoices', // Project invoices
             ]),

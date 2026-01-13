@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
 import { 
     XMarkIcon, 
     CalendarIcon,
@@ -101,32 +102,75 @@ watch(() => props.show, (showing) => {
                 form.priority = props.task.priority || 'medium';
                 form.due_date = formatDateInput(props.task.due_date);
                 form.has_subtasks = props.task.has_subtasks !== false;
+
+                // Lazy load details if show is triggered and task is present
+                // This covers cases where 'task' prop was already set but 'show' came later
+                localComments.value = [];
+                localMedia.value = [];
+                fetchTaskDetails(props.task.id);
             } else {
                 // Create mode
                 form.reset();
                 form.priority = 'medium';
                 form.has_subtasks = true;
+                localComments.value = [];
             }
         }, 100);
-    } else {
-        // Deferred clear handled implicitly or we can force reset if needed
-        // setTimeout(() => form.reset(), 500); 
-        // Keeping it simple as parent might handle task prop clearing
-    }
+    } 
 });
 
 // Watch task prop strictly for updates while open
 watch(() => props.task, (newTask) => {
     if (props.show && newTask) {
-        // Update form if we receive new data while open (e.g. after save)
+        // Update form
         form.name = newTask.name || '';
         form.description = newTask.description || '';
         form.priority = newTask.priority || 'medium';
         form.due_date = formatDateInput(newTask.due_date);
         form.has_subtasks = newTask.has_subtasks !== false;
+
+        // Fetch details (Lazy Load)
+        localComments.value = [];
+        localMedia.value = [];
+        // Only fetch if it's an existing task (has ID)
+        if (newTask.id) {
+            fetchTaskDetails(newTask.id);
+        }
     }
 });
 
+const localComments = ref([]);
+const localMedia = ref([]);
+const isLoadingDetails = ref(false);
+
+const fetchTaskDetails = async (taskId) => {
+    if (!taskId) return;
+    isLoadingDetails.value = true;
+    
+    // Debug log
+    console.log('Fetching details for task:', taskId);
+
+    try {
+        const url = route('tasks.show', taskId);
+        console.log('Requesting URL:', url);
+        
+        const response = await axios.get(url);
+        
+        // Safety check for data structure
+        if (response.data) {
+            localComments.value = response.data.comments || [];
+            localMedia.value = response.data.media || [];
+            console.log('Details loaded:', { comments: localComments.value.length, media: localMedia.value.length });
+        }
+    } catch (error) {
+        console.error('Error fetching task details:', error);
+        // Fallback to empty to avoid breaking UI
+        localComments.value = [];
+        localMedia.value = [];
+    } finally {
+        isLoadingDetails.value = false;
+    }
+};
 
 // Actions
 const saveField = (field) => {
@@ -205,6 +249,18 @@ const deleteTask = () => {
         });
     }
 };
+
+const handleCommentCreated = (comment) => {
+    localComments.value.push(comment);
+    emit('created', comment);
+    emit('comment-created', comment);
+};
+
+const handleCommentDeleted = (comment) => {
+    localComments.value = localComments.value.filter(c => c.id !== comment.id);
+    emit('comment-deleted', comment);
+};
+
 </script>
 
 <template>
@@ -421,16 +477,26 @@ const deleteTask = () => {
                                             </div>
                                         </div>
 
-                                        <!-- Comments Section (only in edit mode and when task.id exists) -->
+                                        <!-- Comments Section -->
                                         <div v-if="!isCreateMode && task?.id" class="space-y-3">
-                                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Comentarios</label>
+                                            <div class="flex items-center justify-between">
+                                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Comentarios</label>
+                                                <span v-if="isLoadingDetails" class="text-xs text-gray-400 animate-pulse">Cargando...</span>
+                                            </div>
+                                            
+                                            <div v-if="isLoadingDetails" class="space-y-4 animate-pulse">
+                                                <div class="h-10 bg-gray-100 rounded"></div>
+                                                <div class="h-10 bg-gray-100 rounded"></div>
+                                            </div>
+
                                             <CommentsSection 
+                                                v-else
                                                 :key="task.id"
                                                 :commentable-id="task.id" 
                                                 commentable-type="App\Models\Task"
-                                                :initial-comments="task?.comments || []" 
-                                                @comment-created="$emit('created', $event); $emit('comment-created', $event)"
-                                                @comment-deleted="$emit('comment-deleted', $event)"
+                                                :initial-comments="localComments" 
+                                                @comment-created="handleCommentCreated"
+                                                @comment-deleted="handleCommentDeleted"
                                             />
                                         </div>
 

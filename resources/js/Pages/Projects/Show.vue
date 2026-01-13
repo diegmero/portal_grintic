@@ -620,14 +620,14 @@ const deleteSubtask = (subtaskId) => {
                                                         <span class="leading-none pt-0.5">{{ formatShortDate(task.due_date) }}</span>
                                                     </span>
 
-                                                    <div v-if="task.comments?.length" class="flex items-center gap-1">
+                                                    <div v-if="task.comments_count > 0" class="flex items-center gap-1">
                                                         <ChatBubbleLeftIcon class="h-3.5 w-3.5 text-gray-400" />
-                                                        <span class="leading-none">{{ task.comments.length }}</span>
+                                                        <span class="leading-none">{{ task.comments_count }}</span>
                                                     </div>
 
-                                                    <div v-if="task.media?.length" class="flex items-center gap-1">
+                                                    <div v-if="task.media_count > 0" class="flex items-center gap-1">
                                                         <PaperClipIcon class="h-3.5 w-3.5 text-gray-400" />
-                                                        <span class="leading-none">{{ task.media.length }}</span>
+                                                        <span class="leading-none">{{ task.media_count }}</span>
                                                     </div>
                                                 </div>
 

@@ -12,6 +12,33 @@ use Illuminate\Http\RedirectResponse;
 
 class TaskController extends Controller
 {
+    public function show(Task $task)
+    {
+        // Security Check
+        $user = request()->user();
+        $project = $task->stage->project;
+
+        // If client, check company_id
+        if ($user->company_id && $project->company_id !== $user->company_id) {
+            abort(403, 'No tienes permiso para ver esta tarea.');
+        }
+
+        // Check view permissions if implemented, but company check is baseline.
+
+        return response()->json([
+            'comments' => $task->comments()->with('user')->orderBy('created_at')->get(),
+            'media' => $task->media()->get()->map(function($media) {
+                 return [
+                    'id' => $media->id,
+                    'file_name' => $media->file_name,
+                    'mime_type' => $media->mime_type,
+                    'size' => $media->size,
+                    'url' => $media->getUrl(), // Or route to download
+                 ];
+            }),
+        ]);
+    }
+
     public function update(Request $request, Task $task, RecalculateProjectProgressAction $recalculateProgress): RedirectResponse
     {
         $validated = $request->validate([

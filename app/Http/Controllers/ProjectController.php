@@ -25,10 +25,10 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'project' => $project->load([
                 'company', 
-                'stages.tasks.subtasks',
-                'stages.tasks.comments.user', 
-                'stages.tasks.media',
                 'stages.media',
+                'stages.tasks' => function ($query) {
+                    $query->withCount(['comments', 'media'])->with(['subtasks']);
+                },
                 'media',
                 'invoices',
                 'additionals', 
@@ -41,22 +41,23 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Board', [
             'project' => $project->load([
                 'company', 
-                'stages.tasks.subtasks',
-                'stages.tasks.comments', 
-                'stages.tasks.media',
+                'stages.tasks' => function ($query) {
+                    $query->withCount(['comments', 'media'])->with(['subtasks']);
+                },
             ]),
         ]);
     }
 
     public function clientView(Project $project): Response
     {
-        // Client read-only view
+        // Client read-only view strategy is now handled by ClientPortalController, 
+        // but keeping this optimized just in case it's used elsewhere.
         return Inertia::render('ClientPortal/ProjectView', [
             'project' => $project->load([
                 'company', 
-                'stages.tasks.subtasks',
-                'stages.tasks.comments.user', 
-                'stages.tasks.media',
+                'stages.tasks' => function ($query) {
+                    $query->withCount(['comments', 'media'])->with(['subtasks']);
+                },
             ]),
         ]);
     }
