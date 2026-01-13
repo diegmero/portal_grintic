@@ -95,6 +95,13 @@ Route::middleware('auth')->group(function () {
     // Client Services
     Route::get('/clients/{client}/active-services', [\App\Http\Controllers\ClientServiceController::class, 'getActiveServices'])->name('clients.services.active');
     Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
+    // Marketplace
+    Route::prefix('marketplace')->name('marketplace.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MarketplaceController::class, 'index'])->name('index');
+        Route::get('/{product:slug}', [\App\Http\Controllers\MarketplaceController::class, 'show'])->name('show');
+        Route::post('/{product}/request', [\App\Http\Controllers\ServiceRequestController::class, 'store'])->name('request');
+    });
+
 });
 
 // Client Portal Routes (isolated from admin routes)

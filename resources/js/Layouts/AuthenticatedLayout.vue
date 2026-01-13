@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -28,6 +28,19 @@ const navigation = computed(() => {
 
     if (!isClient.value) {
         nav.push({ name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') });
+    }
+
+    // Marketplace (Visible to all, or just clients? User said "en el cliente no existen mas pestañas")
+    // Let's add it for everyone, as Admins need to debug it too usually.
+    // If strict requirement to hide from admin: wrap in isClient. But user said "as admin obviously I won't request", suggesting they know it's there but it's for clients.
+    // Let's make it visible to clients primarily.
+    
+    if (isClient.value) {
+        nav.push({ name: 'Catálogo / Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
+    } else {
+        // Optional: Show for admin to preview? User said "admin obviously won't request". 
+        // Let's show it so they can see what clients see.
+        nav.push({ name: 'Ver Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
     }
 
     // Use portal routes for clients, admin routes for admins
@@ -54,6 +67,7 @@ const navigation = computed(() => {
 
     return nav;
 });
+
 
 import ToastNotification from '@/Components/ToastNotification.vue';
 

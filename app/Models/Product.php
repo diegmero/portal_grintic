@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BillingCycle;
-use App\Enums\ProductCategory;
+
 use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +29,6 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'category' => ProductCategory::class,
         'type' => ProductType::class,
         'billing_cycle' => BillingCycle::class,
         'base_price' => 'decimal:2',
