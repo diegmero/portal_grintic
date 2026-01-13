@@ -16,21 +16,16 @@ onMounted(() => {
     const userId = page.props.auth.user?.id;
     
     if (userId && window.Echo) {
-        console.log('Subscribing to notification channel:', `App.Models.User.${userId}`);
-        
         // Universal Listener for both Admin and Client
         window.Echo.private(`App.Models.User.${userId}`)
             .notification((notification) => {
-                console.log('Notification received:', notification);
                 title.value = notification.title || 'Nueva Notificación';
                 message.value = notification.message;
                 type.value = notification.type || 'info';
                 
                 show.value = true;
-                setTimeout(() => { show.value = false; }, 8000);
+                setTimeout(() => { show.value = false; }, 5000);
             });
-    } else {
-        console.warn('Cannot subscribe to notifications: Missing userId or Echo');
     }
 });
 
@@ -47,7 +42,7 @@ watch(() => page.props.flash, (flash) => {
         message.value = flash.error;
         type.value = 'error';
         show.value = true;
-        setTimeout(() => show.value = false, 8000);
+        setTimeout(() => show.value = false, 5000);
     }
 }, { deep: true });
 </script>
