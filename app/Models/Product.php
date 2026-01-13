@@ -16,7 +16,9 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'category',
+        'slug',
+        'product_category_id', // Replaces 'category' enum eventually
+        'category', // Keep for backward compat until full migration
         'type',
         'billing_cycle',
         'base_price',
@@ -33,6 +35,16 @@ class Product extends Model
             'base_price' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function productCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ProductCategory::class);
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
     }
 
     public function clientServices(): HasMany

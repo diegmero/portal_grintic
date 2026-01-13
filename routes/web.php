@@ -81,7 +81,11 @@ Route::middleware('auth')->group(function () {
     Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
 
     // Products Catalog
-    Route::resource('products', \App\Http\Controllers\ProductController::class)->only(['index', 'store', 'update', 'destroy']);
+    // Products & Categories
+    Route::resource('product-categories', \App\Http\Controllers\Admin\ProductCategoryController::class)
+        ->except(['create', 'edit', 'show']);
+        
+    Route::resource('products', \App\Http\Controllers\ProductController::class);
 
     // Notifications
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');

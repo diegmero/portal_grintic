@@ -17,6 +17,7 @@ class ClientService extends Model
     protected $fillable = [
         'company_id',
         'product_id',
+        'product_variant_id',
         'custom_price',
         'start_date',
         'end_date',
@@ -61,12 +62,27 @@ class ClientService extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
     /**
      * Get the effective price (custom or base)
      */
     public function getEffectivePriceAttribute(): float
     {
-        return $this->custom_price ?? $this->product->base_price;
+        if ($this->custom_price) {
+            return $this->custom_price;
+        }
+
+        $price = $this->product->base_price;
+
+        if ($this->variant) {
+            $price += $this->variant->additional_price;
+        }
+
+        return $price;
     }
 
     /**

@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon } from '@heroicons/vue/24/outline';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -46,6 +46,7 @@ const navigation = computed(() => {
     
     if (!isClient.value) {
         nav.push({ name: 'Productos', href: route('products.index'), icon: CubeIcon, current: route().current('products.*') || route().current('services.*') });
+        nav.push({ name: 'Categorías', href: route('product-categories.index'), icon: TagIcon, current: route().current('product-categories.*') });
     } else {
         // Client can see their services
         nav.push({ name: 'Mis Servicios', href: route('portal.services'), icon: CubeIcon, current: route().current('portal.services') });

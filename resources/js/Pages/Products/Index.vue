@@ -163,7 +163,7 @@ const formatCurrency = (amount) => {
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-3">
                                             <div class="h-10 w-10 rounded-lg bg-brand/10 flex items-center justify-center">
-                                                <component :is="categoryIcons[product.category] || CubeIcon" class="h-5 w-5 text-brand" />
+                                                <component :is="categoryIcons[product.product_category?.slug || product.category] || CubeIcon" class="h-5 w-5 text-brand" />
                                             </div>
                                             <div>
                                                 <div class="font-medium text-gray-900">{{ product.name }}</div>
@@ -172,7 +172,7 @@ const formatCurrency = (amount) => {
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-gray-600">{{ categories.find(c => c.value === product.category)?.label || product.category }}</span>
+                                        <span class="text-sm text-gray-600">{{ product.product_category?.name || product.category }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span :class="[

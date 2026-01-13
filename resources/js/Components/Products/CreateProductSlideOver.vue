@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { useForm } from '@inertiajs/vue3';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -23,12 +23,67 @@ const isEditing = computed(() => !!props.product);
 
 const form = useForm({
     name: '',
-    category: 'hosting',
+    slug: '',
+    product_category_id: '',
     type: 'subscription',
     billing_cycle: 'monthly',
     base_price: '',
     description: '',
+    variants: [],
     is_active: true,
+});
+
+
+
+// Slugify helper
+const slugify = (text) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')     // Replace spaces with -
+        .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+        .replace(/\-\-+/g, '-')   // Replace multiple - with single -
+        .replace(/^-+/, '')       // Trim - from start of text
+        .replace(/-+$/, '');      // Trim - from end of text
+};
+
+// Filtered Billing Cycles based on Type
+const availableBillingCycles = computed(() => {
+    if (form.type === 'one_time') {
+        return props.billingCycles.filter(c => c.value === 'lifetime');
+    }
+    // For subscriptions, exclude lifetime
+    return props.billingCycles.filter(c => c.value !== 'lifetime');
+});
+
+// Auto-switch billing cycle when type changes
+watch(() => form.type, (newType) => {
+    if (newType === 'one_time') {
+        form.billing_cycle = 'lifetime';
+    } else {
+        form.billing_cycle = 'monthly';
+    }
+});
+
+const addVariant = () => {
+    form.variants.push({
+        name: '',
+        additional_price: 0,
+        is_active: true
+    });
+};
+
+const removeVariant = (index) => {
+    form.variants.splice(index, 1);
+};
+
+// Auto-generate slug from name
+watch(() => form.name, (val) => {
+    // Only auto-generate if creating or if slug matches generated name
+    if (!props.product || !form.slug || form.slug === slugify(props.product.name)) {
+         form.slug = slugify(val);
+    }
 });
 
 watch(() => props.open, (open) => {
@@ -37,20 +92,33 @@ watch(() => props.open, (open) => {
         setTimeout(() => {
             if (props.product) {
                 form.name = props.product.name;
-                form.category = props.product.category;
+                form.slug = props.product.slug;
+                // Use product_category_id from prop, fallback to first category if null (migration safe)
+                form.product_category_id = props.product.product_category_id || (props.categories.length > 0 ? props.categories[0].value : '');
                 form.type = props.product.type;
                 form.billing_cycle = props.product.billing_cycle || 'monthly';
                 form.base_price = props.product.base_price;
                 form.description = props.product.description || '';
                 form.is_active = props.product.is_active;
+                
+                // Variants
+                form.variants = props.product.variants ? props.product.variants.map(v => ({
+                    id: v.id,
+                    name: v.name,
+                    additional_price: v.additional_price,
+                    is_active: !!v.is_active
+                })) : [];
             } else {
                 form.reset();
-                form.category = 'hosting';
+                // Default to first category
+                form.product_category_id = props.categories.length > 0 ? props.categories[0].value : '';
                 form.type = 'subscription';
                 form.billing_cycle = 'monthly';
                 form.is_active = true;
+                form.variants = [];
             }
         }, 100);
+
     } else {
         // Deferred clearing on close
         setTimeout(() => {
@@ -128,15 +196,22 @@ const submit = () => {
                                         <InputError :message="form.errors.name" class="mt-2" />
                                     </div>
 
+                                    <div>
+                                        <InputLabel for="slug" value="Slug (Opcional)" />
+                                        <TextInput id="slug" v-model="form.slug" type="text" class="mt-1 block w-full" placeholder="Ej: hosting-basico" />
+                                        <p class="text-xs text-gray-500 mt-1">Se generará automáticamente si se deja vacío.</p>
+                                        <InputError :message="form.errors.slug" class="mt-2" />
+                                    </div>
+
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <InputLabel for="category" value="Categoría" />
                                             <CustomSelect
-                                                v-model="form.category"
+                                                v-model="form.product_category_id"
                                                 :options="categories"
                                                 class="mt-1"
                                             />
-                                            <InputError :message="form.errors.category" class="mt-2" />
+                                            <InputError :message="form.errors.product_category_id" class="mt-2" />
                                         </div>
 
                                         <div>
@@ -155,7 +230,7 @@ const submit = () => {
                                             <InputLabel for="billing_cycle" value="Ciclo de Facturación" />
                                             <CustomSelect
                                                 v-model="form.billing_cycle"
-                                                :options="billingCycles"
+                                                :options="availableBillingCycles"
                                                 class="mt-1"
                                                 :disabled="form.type === 'one_time'"
                                             />
@@ -200,6 +275,57 @@ const submit = () => {
                                         <InputLabel for="is_active" value="Producto Activo" class="!mb-0" />
                                     </div>
 
+                                    <div class="pt-6 border-t border-gray-200">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <h3 class="text-sm font-medium text-gray-900">Variaciones del Producto</h3>
+                                            <button type="button" @click="addVariant" class="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1">
+                                                <PlusIcon class="h-4 w-4" />
+                                                Agregar
+                                            </button>
+                                        </div>
+
+                                        <div v-if="form.variants.length === 0" class="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                            <p class="text-xs text-gray-500">No hay variaciones configuradas.</p>
+                                        </div>
+
+                                        <div v-else class="space-y-4">
+                                            <div v-for="(variant, index) in form.variants" :key="index" class="bg-gray-50 p-3 rounded-lg border border-gray-200 relative group">
+                                                <button type="button" @click="removeVariant(index)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                                                    <XMarkIcon class="h-4 w-4" />
+                                                </button>
+                                                
+                                                <div class="grid grid-cols-6 gap-3">
+                                                    <div class="col-span-4">
+                                                        <InputLabel :for="'var_name_'+index" value="Nombre" class="text-xs" />
+                                                        <TextInput :id="'var_name_'+index" v-model="variant.name" type="text" class="mt-1 block w-full !py-1 !px-2 !text-sm" placeholder="Ej. 10GB Espacio" />
+                                                        <InputError :message="form.errors[`variants.${index}.name`]" class="mt-1" />
+                                                    </div>
+                                                    <div class="col-span-2">
+                                                        <InputLabel :for="'var_price_'+index" value="+ Precio" class="text-xs" />
+                                                        <input 
+                                                            :id="'var_price_'+index"
+                                                            v-model="variant.additional_price"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm py-1 px-2"
+                                                        />
+                                                        <InputError :message="form.errors[`variants.${index}.additional_price`]" class="mt-1" />
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2 flex items-center gap-2">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        :id="'var_active_'+index" 
+                                                        v-model="variant.is_active"
+                                                        class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+                                                    />
+                                                    <label :for="'var_active_'+index" class="text-xs text-gray-600">Activo</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
                                 <div class="flex flex-shrink-0 justify-end px-4 py-4 gap-3 bg-gray-50 border-t border-gray-200">
                                     <SecondaryButton @click="emit('close')">Cancelar</SecondaryButton>
