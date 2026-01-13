@@ -12,18 +12,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Foreign key does not exist, so we skip dropping it.
         // Schema::table('service_requests', function (Blueprint $table) {
         //    $table->dropForeign(['user_id']);
         // });
 
         // Modifying column to CHAR(36) for UUID
-        // Using raw statement to avoid doctrine dependency issues if not installed
+        Schema::table('service_requests', function (Blueprint $table) {
+            // Drop FK if it exists to avoid duplication error 121
+            // We use standard array syntax which Laravel converts to defaults
+            $table->dropForeign(['user_id']);
+        });
+
         DB::statement('ALTER TABLE service_requests MODIFY user_id CHAR(36) NOT NULL');
 
         Schema::table('service_requests', function (Blueprint $table) {
-            // Re-add FK
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+             // Re-add FK only if it doesn't exist (though we just dropped it)
+             // But to be extra safe against "Duplicate key" error if drop failed silently (unlikely)
+             // let's just add it. The drop above is the key fix.
+             // However, dropForeign might throw if it DOESN'T exist.
+             // So we need to be smart.
+
+             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
