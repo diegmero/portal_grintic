@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductVariant extends Model
+class ProductAddon extends Model
 {
-    use HasFactory, HasUuids;
+    use HasUuids, HasFactory;
+
+    protected $table = 'product_addons';
 
     protected $fillable = [
         'product_id',

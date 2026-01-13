@@ -8,6 +8,7 @@ use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ProductAddon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -24,27 +25,28 @@ class Product extends Model
         'base_price',
         'description',
         'is_active',
+        'features',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'category' => ProductCategory::class,
-            'type' => ProductType::class,
-            'billing_cycle' => BillingCycle::class,
-            'base_price' => 'decimal:2',
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'category' => ProductCategory::class,
+        'type' => ProductType::class,
+        'billing_cycle' => BillingCycle::class,
+        'base_price' => 'decimal:2',
+        'is_active' => 'boolean',
+        'features' => 'array',
+    ];
 
     public function productCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(\App\Models\ProductCategory::class);
     }
 
-    public function variants(): HasMany
+
+
+    public function addons(): HasMany
     {
-        return $this->hasMany(ProductVariant::class);
+        return $this->hasMany(ProductAddon::class);
     }
 
     public function clientServices(): HasMany

@@ -29,11 +29,10 @@ const form = useForm({
     billing_cycle: 'monthly',
     base_price: '',
     description: '',
-    variants: [],
+    features: [],
+    addons: [],
     is_active: true,
 });
-
-
 
 // Slugify helper
 const slugify = (text) => {
@@ -66,16 +65,24 @@ watch(() => form.type, (newType) => {
     }
 });
 
-const addVariant = () => {
-    form.variants.push({
+const addAddon = () => {
+    form.addons.push({
         name: '',
         additional_price: 0,
         is_active: true
     });
 };
 
-const removeVariant = (index) => {
-    form.variants.splice(index, 1);
+const removeAddon = (index) => {
+    form.addons.splice(index, 1);
+};
+
+const addFeature = () => {
+    form.features.push('');
+};
+
+const removeFeature = (index) => {
+    form.features.splice(index, 1);
 };
 
 // Auto-generate slug from name
@@ -99,10 +106,11 @@ watch(() => props.open, (open) => {
                 form.billing_cycle = props.product.billing_cycle || 'monthly';
                 form.base_price = props.product.base_price;
                 form.description = props.product.description || '';
+                form.features = props.product.features || [];
                 form.is_active = props.product.is_active;
                 
-                // Variants
-                form.variants = props.product.variants ? props.product.variants.map(v => ({
+                // Addons
+                form.addons = props.product.addons ? props.product.addons.map(v => ({
                     id: v.id,
                     name: v.name,
                     additional_price: v.additional_price,
@@ -115,7 +123,8 @@ watch(() => props.open, (open) => {
                 form.type = 'subscription';
                 form.billing_cycle = 'monthly';
                 form.is_active = true;
-                form.variants = [];
+                form.addons = [];
+                form.features = [];
             }
         }, 100);
 
@@ -277,50 +286,73 @@ const submit = () => {
 
                                     <div class="pt-6 border-t border-gray-200">
                                         <div class="flex items-center justify-between mb-4">
-                                            <h3 class="text-sm font-medium text-gray-900">Variaciones del Producto</h3>
-                                            <button type="button" @click="addVariant" class="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1">
+                                            <h3 class="text-sm font-medium text-gray-900">Características (Incluido)</h3>
+                                            <button type="button" @click="addFeature" class="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1">
                                                 <PlusIcon class="h-4 w-4" />
                                                 Agregar
                                             </button>
                                         </div>
 
-                                        <div v-if="form.variants.length === 0" class="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                                            <p class="text-xs text-gray-500">No hay variaciones configuradas.</p>
+                                        <div v-if="form.features.length === 0" class="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                            <p class="text-xs text-gray-500">Agrega características (ej. 2GB RAM, SSL Gratis)</p>
+                                        </div>
+
+                                        <div v-else class="space-y-2">
+                                            <div v-for="(feature, index) in form.features" :key="index" class="flex items-center gap-2">
+                                                <TextInput v-model="form.features[index]" type="text" class="block w-full !py-1 !px-2 !text-sm" placeholder="Ej. 2GB RAM" />
+                                                <button type="button" @click="removeFeature(index)" class="text-gray-400 hover:text-red-500">
+                                                    <XMarkIcon class="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-6 border-t border-gray-200">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <h3 class="text-sm font-medium text-gray-900">Servicios Adicionales (Extras)</h3>
+                                            <button type="button" @click="addAddon" class="text-xs text-brand hover:text-brand-dark font-medium flex items-center gap-1">
+                                                <PlusIcon class="h-4 w-4" />
+                                                Agregar
+                                            </button>
+                                        </div>
+
+                                        <div v-if="form.addons.length === 0" class="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                            <p class="text-xs text-gray-500">No hay adicionales configurados (ej. IP Extra).</p>
                                         </div>
 
                                         <div v-else class="space-y-4">
-                                            <div v-for="(variant, index) in form.variants" :key="index" class="bg-gray-50 p-3 rounded-lg border border-gray-200 relative group">
-                                                <button type="button" @click="removeVariant(index)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                                            <div v-for="(addon, index) in form.addons" :key="index" class="bg-gray-50 p-3 rounded-lg border border-gray-200 relative group">
+                                                <button type="button" @click="removeAddon(index)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
                                                     <XMarkIcon class="h-4 w-4" />
                                                 </button>
                                                 
                                                 <div class="grid grid-cols-6 gap-3">
                                                     <div class="col-span-4">
-                                                        <InputLabel :for="'var_name_'+index" value="Nombre" class="text-xs" />
-                                                        <TextInput :id="'var_name_'+index" v-model="variant.name" type="text" class="mt-1 block w-full !py-1 !px-2 !text-sm" placeholder="Ej. 10GB Espacio" />
-                                                        <InputError :message="form.errors[`variants.${index}.name`]" class="mt-1" />
+                                                        <InputLabel :for="'addon_name_'+index" value="Nombre" class="text-xs" />
+                                                        <TextInput :id="'addon_name_'+index" v-model="addon.name" type="text" class="mt-1 block w-full !py-1 !px-2 !text-sm" placeholder="Ej. IP Adicional" />
+                                                        <InputError :message="form.errors[`addons.${index}.name`]" class="mt-1" />
                                                     </div>
                                                     <div class="col-span-2">
-                                                        <InputLabel :for="'var_price_'+index" value="+ Precio" class="text-xs" />
+                                                        <InputLabel :for="'addon_price_'+index" value="+ Precio" class="text-xs" />
                                                         <input 
-                                                            :id="'var_price_'+index"
-                                                            v-model="variant.additional_price"
+                                                            :id="'addon_price_'+index"
+                                                            v-model="addon.additional_price"
                                                             type="number"
                                                             step="0.01"
                                                             min="0"
                                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand focus:ring-brand sm:text-sm py-1 px-2"
                                                         />
-                                                        <InputError :message="form.errors[`variants.${index}.additional_price`]" class="mt-1" />
+                                                        <InputError :message="form.errors[`addons.${index}.additional_price`]" class="mt-1" />
                                                     </div>
                                                 </div>
                                                 <div class="mt-2 flex items-center gap-2">
                                                     <input 
                                                         type="checkbox" 
-                                                        :id="'var_active_'+index" 
-                                                        v-model="variant.is_active"
+                                                        :id="'addon_active_'+index" 
+                                                        v-model="addon.is_active"
                                                         class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
                                                     />
-                                                    <label :for="'var_active_'+index" class="text-xs text-gray-600">Activo</label>
+                                                    <label :for="'addon_active_'+index" class="text-xs text-gray-600">Activo</label>
                                                 </div>
                                             </div>
                                         </div>

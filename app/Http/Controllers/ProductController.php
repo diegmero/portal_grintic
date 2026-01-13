@@ -16,20 +16,16 @@ class ProductController extends Controller
         // Clients CAN view products (Marketplace), but Frontend should hide Edit/Delete buttons.
         
         $products = Product::query()
-            ->with(['productCategory', 'variants']) // Eager load new relationship
-            // Filter by product_category_id if UUID is passed, or legacy 'category' string if old link
-            ->when($request->category, function ($q, $category) {
-                // If it looks like a UUID
-                if (\Illuminate\Support\Str::isUuid($category)) {
-                    $q->where('product_category_id', $category);
-                } else {
-                    $q->where('category', $category);
-                }
+            ->with(['productCategory', 'addons']) // Eager loading
+            ->when($request->category, function ($q, $cat) {
+                // ... logic same
+                $q->whereHas('productCategory', fn($pc) => $pc->where('id', $cat)) // UUID
+                  ->orWhere('category', $cat);
             })
             ->when($request->type, fn($q, $type) => $q->where('type', $type))
             ->when($request->search, fn($q, $search) => $q->where('name', 'like', "%{$search}%"))
             ->orderBy('name')
-            ->paginate(20)
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Products/Index', [
@@ -67,10 +63,12 @@ class ProductController extends Controller
             'base_price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
-            'variants' => 'nullable|array',
-            'variants.*.name' => 'required|string|max:255',
-            'variants.*.additional_price' => 'required|numeric|min:0',
-            'variants.*.is_active' => 'boolean',
+            'features' => 'nullable|array',
+            'features.*' => 'string|max:255',
+            'addons' => 'nullable|array',
+            'addons.*.name' => 'required|string|max:255',
+            'addons.*.additional_price' => 'required|numeric|min:0',
+            'addons.*.is_active' => 'boolean',
         ]);
 
         if (empty($validated['slug'])) {
@@ -83,9 +81,9 @@ class ProductController extends Controller
 
         $product = Product::create($validated);
 
-        // Handle Variants
-        if (!empty($validated['variants'])) {
-            $product->variants()->createMany($validated['variants']);
+        // Handle Addons
+        if (!empty($validated['addons'])) {
+            $product->addons()->createMany($validated['addons']);
         }
 
         return back()->with('success', 'Producto creado exitosamente.');
@@ -106,11 +104,13 @@ class ProductController extends Controller
             'base_price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
-            'variants' => 'nullable|array',
-            'variants.*.id' => 'nullable|uuid',
-            'variants.*.name' => 'required|string|max:255',
-            'variants.*.additional_price' => 'required|numeric|min:0',
-            'variants.*.is_active' => 'boolean',
+            'features' => 'nullable|array',
+            'features.*' => 'string|max:255',
+            'addons' => 'nullable|array',
+            'addons.*.id' => 'nullable|uuid',
+            'addons.*.name' => 'required|string|max:255',
+            'addons.*.additional_price' => 'required|numeric|min:0',
+            'addons.*.is_active' => 'boolean',
         ]);
 
         if (empty($validated['slug']) && $product->name !== $validated['name']) {
@@ -123,34 +123,32 @@ class ProductController extends Controller
 
         $product->update($validated);
 
-        // Sync Variants
-        // Strategy: We receive a list. If ID exists, update. If no ID, create.
-        // IDs not in the list but existing in DB associated with product should be deleted?
-        // Yes, "Sync" usually implies removing missing ones.
+        // Sync Addons
+        if (isset($validated['addons'])) {
+            $currentAddonIds = collect($validated['addons'])->pluck('id')->filter();
+            // Delete addons not present
+            $product->addons()->whereNotIn('id', $currentAddonIds)->delete();
 
-        $receivedVariantIds = collect($validated['variants'] ?? [])
-            ->pluck('id')
-            ->filter()
-            ->toArray();
-
-        // 1. Delete removed variants
-        $product->variants()->whereNotIn('id', $receivedVariantIds)->delete();
-
-        // 2. Update or Create
-        if (!empty($validated['variants'])) {
-            foreach ($validated['variants'] as $variantData) {
-                $product->variants()->updateOrCreate(
-                    ['id' => $variantData['id'] ?? \Illuminate\Support\Str::uuid()],
+            foreach ($validated['addons'] as $addonData) {
+                $product->addons()->updateOrCreate(
+                    ['id' => $addonData['id'] ?? null],
                     [
-                        'name' => $variantData['name'],
-                        'additional_price' => $variantData['additional_price'],
-                        'is_active' => $variantData['is_active'] ?? true,
+                        'name' => $addonData['name'],
+                        'additional_price' => $addonData['additional_price'],
+                        'is_active' => $addonData['is_active'] ?? true,
                     ]
                 );
             }
+        } else {
+             // If addons not provided (or empty array explicitly passed meaning clear all), delete all? 
+             // Usually safe to assume if key exists but empty. If key missing, do nothing?
+             // Front end sends empty array if clearing.
+             if (array_key_exists('addons', $validated)) {
+                 $product->addons()->delete();
+             }
         }
 
-        return back()->with('success', 'Producto actualizado exitosamente.');
+        return back()->with('success', 'Producto actualizado correctamente.');
     }
 
     public function destroy(Product $product)
