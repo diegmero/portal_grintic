@@ -11,6 +11,19 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceRequestController extends Controller
 {
+    public function index(Request $request)
+    {
+        $requests = ServiceRequest::query()
+            ->where('user_id', Auth::id())
+            ->with(['product'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return \Inertia\Inertia::render('Portal/Requests/Index', [
+            'requests' => $requests,
+        ]);
+    }
+
     public function store(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -31,6 +44,6 @@ class ServiceRequestController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('marketplace.index')->with('success', 'Solicitud enviada correctamente. Te contactaremos pronto.');
+        return redirect()->route('portal.requests.index')->with('success', 'Solicitud enviada correctamente. Te contactaremos pronto.');
     }
 }

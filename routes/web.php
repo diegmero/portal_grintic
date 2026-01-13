@@ -115,6 +115,15 @@ Route::prefix('portal')
         Route::get('/invoices/{invoice}', [\App\Http\Controllers\ClientPortalController::class, 'showInvoice'])->name('invoices.show');
         Route::get('/services', [\App\Http\Controllers\ClientPortalController::class, 'services'])->name('services');
         Route::get('/media/{media}', [\App\Http\Controllers\ClientPortalController::class, 'showMedia'])->name('media.show');
+        
+        // Client Requests History
+        Route::get('/requests', [\App\Http\Controllers\ServiceRequestController::class, 'index'])->name('requests.index');
     });
+
+// Admin Request Management Routes (Add to main auth group)
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('requests', \App\Http\Controllers\Admin\ServiceRequestController::class)
+        ->only(['index', 'update']);
+});
 
 require __DIR__.'/auth.php';

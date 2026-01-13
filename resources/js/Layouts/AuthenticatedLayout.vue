@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -37,11 +37,20 @@ const navigation = computed(() => {
     
     if (isClient.value) {
         nav.push({ name: 'Catálogo / Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
-    } else {
-        // Optional: Show for admin to preview? User said "admin obviously won't request". 
-        // Let's show it so they can see what clients see.
-        nav.push({ name: 'Ver Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
+        // Client Requests
+        nav.push({ name: 'Mis Solicitudes', href: route('portal.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('portal.requests.*') });
+    } 
+    
+    if (!isClient.value) {
+        // Admin Requests
+        nav.push({ name: 'Solicitudes de Servicio', href: route('admin.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('admin.requests.*') });
     }
+
+    // Admin hidden check: User requested strict removal.
+    // else {
+    //    // Optional: Show for admin to preview? User said "admin obviously won't request". 
+    //    // nav.push({ name: 'Ver Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
+    //}
 
     // Use portal routes for clients, admin routes for admins
     nav.push({ 

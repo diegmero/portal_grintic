@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('service_requests', function (Blueprint $table) {
-            $table->foreignUuid('user_id')->after('id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('product_id')->after('user_id')->constrained()->cascadeOnDelete();
-            $table->json('configuration')->nullable()->after('product_id'); // Store selected addons
-            $table->decimal('total_price', 10, 2)->after('configuration');
-            $table->string('status')->default('pending')->after('total_price'); // pending, approved, rejected, completed
+            if (!Schema::hasColumn('service_requests', 'user_id')) {
+                $table->foreignUuid('user_id')->after('id')->constrained()->cascadeOnDelete();
+            }
+            if (!Schema::hasColumn('service_requests', 'product_id')) {
+                $table->foreignUuid('product_id')->after('user_id')->constrained()->cascadeOnDelete();
+            }
+            if (!Schema::hasColumn('service_requests', 'configuration')) {
+                $table->json('configuration')->nullable()->after('product_id'); // Store selected addons
+            }
+            if (!Schema::hasColumn('service_requests', 'total_price')) {
+                 $table->decimal('total_price', 10, 2)->after('configuration');
+            }
+            if (!Schema::hasColumn('service_requests', 'status')) {
+                 $table->string('status')->default('pending')->after('total_price'); // pending, approved, rejected, completed
+            }
         });
     }
 
