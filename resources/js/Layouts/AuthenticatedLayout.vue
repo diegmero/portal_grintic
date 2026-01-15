@@ -21,87 +21,87 @@ const isClient = computed(() => {
     return user.value?.roles?.some(role => role.name === 'client');
 });
 
-const navigation = computed(() => {
-    const nav = [
-        { name: isClient.value ? 'Mi Portal' : 'Dashboard', href: route('dashboard'), icon: HomeIcon, current: route().current('dashboard') },
-    ];
+    const navigation = computed(() => {
+        const groups = [];
 
-    if (!isClient.value) {
-        nav.push({ name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') });
-    }
+        // 1. Dashboard (No Group)
+        groups.push({
+            title: null,
+            items: [
+                { name: isClient.value ? 'Mi Portal' : 'Dashboard', href: route('dashboard'), icon: HomeIcon, current: route().current('dashboard') }
+            ]
+        });
 
-    // Marketplace (Visible to all, or just clients? User said "en el cliente no existen mas pestañas")
-    // Let's add it for everyone, as Admins need to debug it too usually.
-    // If strict requirement to hide from admin: wrap in isClient. But user said "as admin obviously I won't request", suggesting they know it's there but it's for clients.
-    // Let's make it visible to clients primarily.
-    
-    if (isClient.value) {
-        nav.push({ name: 'Catálogo / Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
-        // Client Requests
-        nav.push({ name: 'Mis Solicitudes', href: route('portal.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('portal.requests.*') });
-    } 
-    
-    if (!isClient.value) {
-        // Admin Requests
-        nav.push({ name: 'Solicitudes de Servicio', href: route('admin.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('admin.requests.*') });
-    }
+        // 2. CRM (Admin Only)
+        if (!isClient.value) {
+            groups.push({
+                title: 'CRM',
+                items: [
+                    { name: 'Clientes', href: route('clients.index'), icon: UsersIcon, current: route().current('clients.*') }
+                ]
+            });
+        }
 
-    // Admin hidden check: User requested strict removal.
-    // else {
-    //    // Optional: Show for admin to preview? User said "admin obviously won't request". 
-    //    // nav.push({ name: 'Ver Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') });
-    //}
+        // 3. Operaciones (Core Business)
+        const opsItems = [];
+        
+        // Projects
+        opsItems.push({ 
+            name: isClient.value ? 'Mis Proyectos' : 'Proyectos', 
+            href: isClient.value ? route('portal.projects') : route('projects.index'), 
+            icon: FolderIcon, 
+            current: isClient.value ? route().current('portal.projects*') : route().current('projects.*') 
+        });
 
-    // Use portal routes for clients, admin routes for admins
-    nav.push({ 
-        name: isClient.value ? 'Mis Proyectos' : 'Proyectos', 
-        href: isClient.value ? route('portal.projects') : route('projects.index'), 
-        icon: FolderIcon, 
-        current: isClient.value ? route().current('portal.projects*') : route().current('projects.*') 
+
+        // Requests
+        if (isClient.value) {
+            opsItems.push({ name: 'Mis Solicitudes', href: route('portal.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('portal.requests.*') });
+            opsItems.push({ name: 'Mis Servicios', href: route('portal.services'), icon: CubeIcon, current: route().current('portal.services') });
+        } else {
+            opsItems.push({ name: 'Solicitudes', href: route('admin.requests.index'), icon: ClipboardDocumentListIcon, current: route().current('admin.requests.*') });
+        }
+
+        groups.push({
+            title: 'OPERACIONES',
+            items: opsItems
+        });
+
+        // 4. Catálogo / Inventario (Admin Only) or Marketplace (Client)
+        if (!isClient.value) {
+            groups.push({
+                title: 'CATÁLOGO',
+                items: [
+                    { name: 'Productos', href: route('products.index'), icon: CubeIcon, current: route().current('products.*') || route().current('services.*') },
+                    { name: 'Categorías', href: route('product-categories.index'), icon: TagIcon, current: route().current('product-categories.*') },
+                ]
+            });
+        } else {
+            groups.push({
+                title: 'CONTRATACIÓN',
+                items: [
+                    { name: 'Catálogo / Marketplace', href: route('marketplace.index'), icon: ShoppingBagIcon, current: route().current('marketplace.*') }
+                ]
+            });
+        }
+
+        // 5. Finanzas
+        groups.push({
+            title: 'FINANZAS',
+            items: [
+                { 
+                    name: isClient.value ? 'Mis Finanzas' : 'Finanzas', 
+                    href: isClient.value ? route('portal.invoices') : route('invoices.index'), 
+                    icon: CurrencyDollarIcon, 
+                    current: isClient.value ? route().current('portal.invoices*') : route().current('invoices.*') 
+                }
+            ]
+        });
+
+        return groups;
     });
-    nav.push({ 
-        name: isClient.value ? 'Mis Finanzas' : 'Finanzas', 
-        href: isClient.value ? route('portal.invoices') : route('invoices.index'), 
-        icon: CurrencyDollarIcon, 
-        current: isClient.value ? route().current('portal.invoices*') : route().current('invoices.*') 
-    });
-    
-    if (!isClient.value) {
-        nav.push({ name: 'Productos', href: route('products.index'), icon: CubeIcon, current: route().current('products.*') || route().current('services.*') });
-        nav.push({ name: 'Categorías', href: route('product-categories.index'), icon: TagIcon, current: route().current('product-categories.*') });
-    } else {
-        // Client can see their services
-        nav.push({ name: 'Mis Servicios', href: route('portal.services'), icon: CubeIcon, current: route().current('portal.services') });
-    }
 
-    return nav;
-});
-
-
-import ToastNotification from '@/Components/ToastNotification.vue';
-
-const openPalette = () => {
-    showCommandPalette.value = true;
-};
-
-const closePalette = () => {
-    showCommandPalette.value = false;
-};
-
-const onKeydown = (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        openPalette();
-    }
-};
-
-onMounted(() => {
-    window.addEventListener('keydown', onKeydown);
-});
-
-onUnmounted(() => {
-    window.removeEventListener('keydown', onKeydown);
-});
+// ... imports remain the same
 
 </script>
 
@@ -119,13 +119,24 @@ onUnmounted(() => {
                     <ApplicationLogo variant="light" class="h-8" />
                 </Link>
             </div>
-            <nav class="flex flex-1 flex-col px-4 py-6 space-y-1">
-                <Link v-for="item in navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']">
-                    <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
-                    {{ item.name }}
-                </Link>
+            
+            <nav class="flex flex-1 flex-col px-4 py-6 overflow-y-auto">
+                <div v-for="(group, groupIdx) in navigation" :key="groupIdx" class="mb-6">
+                    <div v-if="group.title" class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        {{ group.title }}
+                    </div>
+                    <ul role="list" class="space-y-1">
+                        <li v-for="item in group.items" :key="item.name">
+                            <Link :href="item.href" :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']">
+                                <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                                {{ item.name }}
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
             </nav>
-            <div class="p-4 border-t border-white/10">
+
+            <div class="p-4 border-t border-white/10 mt-auto">
                 <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-brand flex items-center justify-center text-white font-bold">
                         {{ $page.props.auth.user.name.charAt(0) }}

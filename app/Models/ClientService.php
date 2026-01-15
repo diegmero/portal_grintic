@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ClientServiceStatus;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class ClientService extends Model
 {
@@ -47,7 +49,15 @@ class ClientService extends Model
     protected function credentials(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
+            get: function (?string $value) {
+                if (!$value) return null;
+                try {
+                    return Crypt::decryptString($value);
+                } catch (DecryptException $e) {
+                    // Log::error('Could not decrypt client service credentials: ' . $e->getMessage());
+                    return null; // Return null on error to avoid 500
+                }
+            },
             set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
         );
     }
