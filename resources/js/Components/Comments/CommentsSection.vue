@@ -12,10 +12,15 @@ const props = defineProps({
 const emit = defineEmits(['comment-created', 'comment-deleted']);
 
 const comments = ref([...props.initialComments]);
-const currentUser = usePage().props.auth.user;
-const isAdmin = !currentUser?.company_id;
+
+// Use computed for auth user to ensure reactivity (though usePage is reactive, destructuring isn't)
+const currentUser = computed(() => usePage().props.auth.user);
+
+// Admin check: true if user exists and company_id is null
+const isAdmin = computed(() => !!currentUser.value && !currentUser.value.company_id);
+
 const canCreateComments = computed(() => {
-    return isAdmin || currentUser?.permissions?.some(p => p.name === 'create_comments') || false;
+    return isAdmin.value || currentUser.value?.permissions?.some(p => p.name === 'create_comments') || false;
 });
 
 // Edit state
@@ -39,8 +44,8 @@ const submit = () => {
     const newComment = {
         id: tempId,
         body: form.body,
-        user: currentUser,
-        user_id: currentUser?.id, // Fix for immediate edit permission
+        user: currentUser.value,
+        user_id: currentUser.value?.id, // Fix for immediate edit permission
         created_at: new Date().toISOString(),
         isOptimistic: true,
     };
@@ -78,7 +83,7 @@ const deleteComment = (commentId) => {
 };
 
 const canEditComment = (comment) => {
-    return isAdmin || comment.user_id === currentUser?.id;
+    return isAdmin.value || comment.user_id === currentUser.value?.id;
 };
 
 let echoChannel = null;
