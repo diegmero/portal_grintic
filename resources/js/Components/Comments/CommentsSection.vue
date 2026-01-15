@@ -23,6 +23,14 @@ const canCreateComments = computed(() => {
     return isAdmin.value || currentUser.value?.permissions?.some(p => p.name === 'create_comments') || false;
 });
 
+// Debug
+watch(currentUser, (user) => {
+    console.log('DEBUG: Auth User:', user);
+    console.log('DEBUG: isAdmin:', isAdmin.value);
+    console.log('DEBUG: User ID:', user?.id);
+    console.log('DEBUG: Company ID:', user?.company_id);
+}, { immediate: true });
+
 // Edit state
 const editingCommentId = ref(null);
 const editingBody = ref('');
@@ -67,6 +75,42 @@ const submit = () => {
 };
 
 // ...
+
+// Comment Edit Logic
+const startEdit = (comment) => {
+    editingCommentId.value = comment.id;
+    editingBody.value = comment.body;
+};
+
+const cancelEdit = () => {
+    editingCommentId.value = null;
+    editingBody.value = '';
+};
+
+const saveEdit = (comment) => {
+    if (!editingBody.value.trim() || editingBody.value === comment.body) {
+        cancelEdit();
+        return;
+    }
+
+    // Optimistic UI update
+    const originalBody = comment.body;
+    comment.body = editingBody.value;
+    
+    router.patch(route('comments.update', comment.id), {
+        body: editingBody.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            cancelEdit();
+        },
+        onError: () => {
+            // Revert on error
+            comment.body = originalBody;
+            alert('Error al actualizar comentario.');
+        }
+    });
+};
 
 const deleteComment = (commentId) => {
     if (confirm('¿Eliminar este comentario?')) {

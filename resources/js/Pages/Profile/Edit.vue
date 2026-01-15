@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import UserPermissions from './Partials/UserPermissions.vue';
 import { Head } from '@inertiajs/vue3';
 
 defineProps({
@@ -37,6 +38,10 @@ defineProps({
                         :status="status"
                         class="max-w-xl"
                     />
+                </div>
+
+                <div class="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <UserPermissions class="max-w-xl" />
                 </div>
 
                 <div
