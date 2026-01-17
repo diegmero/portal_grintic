@@ -144,9 +144,7 @@ const filteredProjects = computed(() => {
                                         <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Progreso</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fechas</th>
-                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            <span class="">Acciones</span>
-                                        </th>
+
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
