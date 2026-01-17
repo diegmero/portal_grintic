@@ -6,8 +6,16 @@ import { ShieldCheckIcon, UserIcon, BuildingOfficeIcon } from '@heroicons/vue/24
 const user = computed(() => usePage().props.auth.user);
 
 // Helpers
-const isAdmin = computed(() => !user.value.company_id);
-const roleLabel = computed(() => isAdmin.value ? 'Administrador' : 'Cliente');
+const isAdmin = computed(() => {
+    return user.value?.roles?.some(role => role.name === 'admin');
+});
+
+const roleLabel = computed(() => {
+    if (isAdmin.value) return 'Administrador';
+    if (user.value?.roles?.some(role => role.name === 'client')) return 'Cliente';
+    return 'Sin Rol Asignado';
+});
+
 const permissions = computed(() => user.value.permissions || []);
 </script>
 
@@ -27,8 +35,10 @@ const permissions = computed(() => user.value.permissions || []);
             <!-- Identity Card -->
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-100 flex items-start gap-4">
                 <div class="p-2 bg-white rounded-full shadow-sm">
+                <div class="p-2 bg-white rounded-full shadow-sm">
                     <ShieldCheckIcon v-if="isAdmin" class="w-6 h-6 text-brand" />
-                    <UserIcon v-else class="w-6 h-6 text-gray-500" />
+                    <UserIcon v-else-if="roleLabel === 'Cliente'" class="w-6 h-6 text-blue-500" />
+                    <UserIcon v-else class="w-6 h-6 text-gray-400" />
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900">{{ roleLabel }}</h3>
