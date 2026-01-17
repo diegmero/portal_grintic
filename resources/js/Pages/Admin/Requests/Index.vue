@@ -95,15 +95,8 @@ const updateStatus = (request, newStatus) => {
 
                 <!-- Main Table Container -->
                 <!-- Removed overflow-hidden from outer container to allow dropdowns to spill out -->
-                <div class="bg-white shadow-sm sm:rounded-lg border border-gray-200">
-                    <div class="rounded-md"> 
-                        <!-- Inner wrapper handles horizontal scroll if needed, but might still clip. 
-                             For dropdowns to work 100% in scrollable tables, they need 'fixed' pos or 'teleport'.
-                             Workaround: Ensure table has enough height or use 'visible' overflow if possible. 
-                             Actually, if we just remove overflow-hidden from the card, the dropdown will show 
-                             UNLESS the table itself forces scroll. 
-                             Let's try removing overflow-hidden from the card first. -->
-                        
+                <div class="bg-white shadow-sm sm:rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                            <thead class="bg-gray-50">
                                 <tr>
@@ -120,13 +113,34 @@ const updateStatus = (request, newStatus) => {
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <tr v-for="req in requests.data" :key="req.id">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="h-8 w-8 rounded-full bg-brand flex items-center justify-center text-white text-xs font-bold mr-3">
-                                                {{ req.user?.name?.charAt(0) || 'U' }}
+                                        <Link 
+                                            v-if="req.user && req.user.client_id"
+                                            :href="route('clients.edit', req.user.client_id)" 
+                                            class="flex items-center group cursor-pointer"
+                                        >
+                                            <div class="h-8 w-8 rounded-full bg-brand flex items-center justify-center text-white text-xs font-bold mr-3 group-hover:opacity-80 transition-opacity">
+                                                {{ req.user.name?.charAt(0) || 'U' }}
                                             </div>
                                             <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ req.user?.name || 'Usuario Eliminado' }}</div>
-                                                <div class="text-sm text-gray-500">{{ req.user?.email }}</div>
+                                                <div class="text-sm font-medium text-gray-900 group-hover:text-brand group-hover:underline">{{ req.user.name }}</div>
+                                                <div class="text-sm text-gray-500">{{ req.user.email }}</div>
+                                            </div>
+                                        </Link>
+                                        <div v-else-if="req.user" class="flex items-center">
+                                             <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-bold mr-3">
+                                                {{ req.user.name?.charAt(0) || 'U' }}
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">{{ req.user.name }}</div>
+                                                <div class="text-sm text-gray-500 text-xs">(Sin Empresa Asignada)</div>
+                                            </div>
+                                        </div>
+                                        <div v-else class="flex items-center">
+                                             <div class="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold mr-3">
+                                                X
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">Usuario Eliminado</div>
                                             </div>
                                         </div>
                                     </td>

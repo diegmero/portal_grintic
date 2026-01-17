@@ -30,15 +30,25 @@ class ClientController extends Controller
 
     public function edit(Company $client): Response
     {
+        $stats = [
+            'total_invoiced' => $client->invoices()->sum('total'),
+            'pending_balance' => $client->invoices()->sum('balance_due'),
+            'active_projects' => $client->projects()->where('status', 'active')->count(),
+            'total_projects' => $client->projects()->count(),
+            'total_contacts' => $client->users()->count(),
+        ];
+
         return Inertia::render('Clients/Edit', [
             'client' => $client->load('users.permissions'),
+            'projects' => $client->projects()->latest()->get(),
+            'stats' => $stats,
         ]);
     }
 
     public function update(StoreClientRequest $request, Company $client): RedirectResponse
     {
         $client->update($request->validated());
-        return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente.');
+        return redirect()->back()->with('success', 'Cliente actualizado exitosamente.');
     }
 
     public function updateUser(\Illuminate\Http\Request $request, Company $client, User $user): RedirectResponse
@@ -46,17 +56,26 @@ class ClientController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8',
+            'is_active' => 'boolean',
+            'is_primary_contact' => 'boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->is_active = $validated['is_active'] ?? true;
         
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+        // Primary Contact Logic
+        if (isset($validated['is_primary_contact'])) {
+             // If setting to true, disable others
+            if ($validated['is_primary_contact']) {
+                $client->users()->where('id', '!=', $user->id)->update(['is_primary_contact' => false]);
+                $user->is_primary_contact = true;
+            } else {
+                $user->is_primary_contact = false;
+            }
         }
 
         if (!empty($validated['password'])) {
@@ -77,17 +96,30 @@ class ClientController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
+            'is_active' => 'boolean',
+            'is_primary_contact' => 'boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
         ]);
+
+        // If this is the first user or marked primary, handle logic
+        $isPrimary = $validated['is_primary_contact'] ?? false;
+        if ($client->users()->count() === 0) {
+            $isPrimary = true;
+        }
+
+        if ($isPrimary) {
+             $client->users()->update(['is_primary_contact' => false]);
+        }
 
         $user = User::create([
             'company_id' => $client->id,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'is_active' => $validated['is_active'] ?? true,
+            'is_primary_contact' => $isPrimary,
         ]);
 
         $user->assignRole('client');

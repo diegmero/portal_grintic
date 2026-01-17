@@ -47,7 +47,7 @@ const updateValue = (option) => {
         <div class="relative">
             <ListboxButton 
                 :class="[
-                    'relative w-full rounded-lg py-2 pl-3 pr-10 text-left text-sm shadow-sm border focus:outline-none',
+                    'relative w-full rounded-lg py-2 pl-3 pr-10 text-left shadow-sm border focus:outline-none',
                     disabled 
                         ? 'bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400' 
                         : 'bg-white border-gray-300 cursor-pointer focus:ring-2 focus:ring-brand focus:border-brand'
@@ -66,7 +66,7 @@ const updateValue = (option) => {
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
             >
-                <ListboxOptions class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none">
+                <ListboxOptions class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
                     <ListboxOption
                         v-for="option in options"
                         :key="option.value"

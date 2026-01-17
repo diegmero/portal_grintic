@@ -9,6 +9,7 @@ class ServiceRequest extends Model
     use \Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'product_id',
         'configuration',
@@ -20,6 +21,11 @@ class ServiceRequest extends Model
         'configuration' => 'array',
         'total_price' => 'decimal:2',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function user()
     {

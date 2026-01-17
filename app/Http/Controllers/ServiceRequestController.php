@@ -13,9 +13,11 @@ class ServiceRequestController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+        
         $requests = ServiceRequest::query()
-            ->where('user_id', Auth::id())
-            ->with(['product'])
+            ->where('company_id', $user->company_id)
+            ->with(['product', 'user']) // Load user to see who requested it
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -31,13 +33,16 @@ class ServiceRequestController extends Controller
             'total_price' => 'required|numeric|min:0',
         ]);
 
-        // Security check: backend recalculation of price could be safer, 
-        // but for now relying on frontend calculated total_price validated against min:0.
-        // Ideally we should recalculate server-side:
-        // $total = $product->base_price + addons_price...
+        $user = Auth::user();
+
+        // Ensure user belongs to a company
+        if (!$user->company_id) {
+             return redirect()->back()->withErrors(['error' => 'Debes pertenecer a una empresa para realizar solicitudes.']);
+        }
 
         $serviceRequest = ServiceRequest::create([
-            'user_id' => Auth::id(),
+            'company_id' => $user->company_id,
+            'user_id' => $user->id,
             'product_id' => $product->id,
             'configuration' => $validated['configuration'],
             'total_price' => $validated['total_price'],

@@ -49,6 +49,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Check for inactive company
+        $user = Auth::user();
+        if ($user->company && $user->company->status !== 'active') {
+             Auth::logout();
+             
+             throw ValidationException::withMessages([
+                'email' => 'La cuenta de tu empresa está inactiva. Por favor contacta al administrador.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

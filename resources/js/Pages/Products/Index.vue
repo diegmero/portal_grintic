@@ -90,19 +90,21 @@ const formatCurrency = (amount) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Catálogo de Productos</h2>
                     <p class="text-sm text-gray-500 mt-1">Hosting, Servidores, CDN, Plugins y más.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 self-start sm:self-auto">
                     <Link :href="route('services.index')" class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gray-700 shadow-sm transition duration-150 ease-in-out hover:bg-gray-50">
                         <ServerIcon class="h-5 w-5" />
-                        Ver Servicios
+                        <span class="hidden sm:inline">Ver Servicios</span>
+                        <span class="sm:hidden">Servs</span>
                     </Link>
                     <PrimaryButton @click="openCreate" class="inline-flex items-center gap-2">
                         <PlusIcon class="h-5 w-5" />
-                        Nuevo Producto
+                        <span class="hidden sm:inline">Nuevo Producto</span>
+                        <span class="sm:hidden">Nuevo</span>
                     </PrimaryButton>
                 </div>
             </div>
@@ -147,6 +149,7 @@ const formatCurrency = (amount) => {
                 <!-- Main: Products Table -->
                 <div class="lg:col-span-4">
                     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -159,7 +162,12 @@ const formatCurrency = (amount) => {
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="product in products.data" :key="product.id" class="hover:bg-gray-50">
+                                <tr 
+                                    v-for="product in products.data" 
+                                    :key="product.id" 
+                                    class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    @click="openEdit(product)"
+                                >
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-3">
                                             <div class="h-10 w-10 rounded-lg bg-brand/10 flex items-center justify-center">
@@ -190,11 +198,8 @@ const formatCurrency = (amount) => {
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <button @click="openEdit(product)" class="text-gray-400 hover:text-brand">
-                                                <PencilSquareIcon class="h-5 w-5" />
-                                            </button>
-                                            <button @click="deleteProduct(product)" class="text-gray-400 hover:text-red-500">
-                                                <TrashIcon class="h-5 w-5" />
+                                            <button @click.stop="deleteProduct(product)" class="text-gray-400 hover:text-red-500 group" title="Eliminar">
+                                                <TrashIcon class="h-5 w-5 group-hover:scale-110 transition-transform" />
                                             </button>
                                         </div>
                                     </td>
@@ -206,6 +211,7 @@ const formatCurrency = (amount) => {
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>

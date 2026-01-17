@@ -112,7 +112,65 @@ const isClient = computed(() => {
         <CommandPalette :open="showCommandPalette" @close="closePalette" />
         <ToastNotification />
 
-        <!-- Sidebar -->
+        <!-- Mobile Sidebar -->
+        <div v-show="showingNavigationDropdown" class="relative z-50 md:hidden" role="dialog" aria-modal="true">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-gray-900/80 transition-opacity ease-linear duration-300" @click="showingNavigationDropdown = false"></div>
+
+            <div class="fixed inset-0 flex">
+                <!-- Off-canvas menu -->
+                <div class="relative mr-16 flex w-full max-w-xs flex-1 transform transition ease-in-out duration-300">
+                    <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
+                        <button type="button" class="-m-2.5 p-2.5 text-white" @click="showingNavigationDropdown = false">
+                            <span class="sr-only">Close sidebar</span>
+                            <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-night px-6 pb-4 ring-1 ring-white/10">
+                        <div class="flex h-16 shrink-0 items-center border-b border-white/10">
+                            <ApplicationLogo variant="light" class="h-8 w-auto" />
+                        </div>
+                        <nav class="flex flex-1 flex-col">
+                            <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                                <li>
+                                    <div v-for="(group, groupIdx) in navigation" :key="groupIdx" class="mb-6">
+                                        <div v-if="group.title" class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {{ group.title }}
+                                        </div>
+                                        <ul role="list" class="space-y-1">
+                                            <li v-for="item in group.items" :key="item.name">
+                                                <Link 
+                                                    :href="item.href" 
+                                                    :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']"
+                                                    @click="showingNavigationDropdown = false"
+                                                >
+                                                    <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                                                    {{ item.name }}
+                                                </Link>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li class="mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-10 w-10 rounded-full bg-brand flex items-center justify-center text-white font-bold">
+                                            {{ $page.props.auth.user.name.charAt(0) }}
+                                        </div>
+                                        <div class="flex flex-col">
+                                             <span class="text-sm font-medium text-white">{{ $page.props.auth.user.name }}</span>
+                                             <span class="text-xs text-gray-400 capitalize">{{ $page.props.auth.user.roles[0]?.name || 'User' }}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (Desktop) -->
         <div class="fixed inset-y-0 left-0 z-50 w-64 bg-night text-white shadow-xl hidden md:flex flex-col transition-all duration-300 no-print">
             <div class="flex h-16 shrink-0 items-center px-6 bg-night border-b border-white/10">
                 <Link :href="route('dashboard')" class="flex items-center gap-3">

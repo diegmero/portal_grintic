@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { FolderIcon, PlusIcon, EyeIcon, PencilSquareIcon } from '@heroicons/vue/24/outline';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { ref } from 'vue';
@@ -59,15 +59,16 @@ const filteredProjects = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Proyectos</h2>
                     <p class="text-sm text-gray-500 mt-1">Gestión de proyectos, etapas y tareas.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 self-start sm:self-auto">
                     <PrimaryButton @click="showCreateSlideOver = true" class="inline-flex items-center gap-2">
                         <PlusIcon class="h-5 w-5" />
-                        Nuevo Proyecto
+                        <span class="hidden sm:inline">Nuevo Proyecto</span>
+                        <span class="sm:hidden">Nuevo</span>
                     </PrimaryButton>
                 </div>
             </div>
@@ -134,7 +135,8 @@ const filteredProjects = computed(() => {
                     <!-- Right Column: Projects Table -->
                     <div class="lg:col-span-4">
                         <div v-if="projects.length > 0" class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Proyecto</th>
@@ -148,7 +150,12 @@ const filteredProjects = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
-                                    <tr v-for="project in filteredProjects" :key="project.id" class="hover:bg-gray-50 transition-colors">
+                                    <tr 
+                                        v-for="project in filteredProjects" 
+                                        :key="project.id" 
+                                        class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                        @click="router.visit(route('projects.show', project.id))"
+                                    >
                                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                                     <div class="flex items-center gap-3">
                                         <div class="h-10 w-10 flex-shrink-0 rounded-lg bg-brand/10 flex items-center justify-center">
@@ -161,7 +168,14 @@ const filteredProjects = computed(() => {
                                     </div>
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                    <span v-if="project.company" class="font-medium text-gray-700">{{ project.company.name }}</span>
+                                    <Link 
+                                        v-if="project.company" 
+                                        :href="route('clients.edit', project.company.id)" 
+                                        class="font-medium text-gray-700 hover:text-brand hover:underline"
+                                        @click.stop
+                                    >
+                                        {{ project.company.name }}
+                                    </Link>
                                     <span v-else class="italic text-gray-400">Sin cliente</span>
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm">
@@ -184,15 +198,10 @@ const filteredProjects = computed(() => {
                                         <div v-if="!project.start_date && !project.end_date" class="text-gray-400 italic">Sin fechas</div>
                                     </div>
                                 </td>
-                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                    <Link :href="route('projects.show', project.id)" class="inline-flex items-center gap-1 text-brand hover:text-brand/80 transition-colors">
-                                        <EyeIcon class="h-4 w-4" />
-                                        <span>Ver</span>
-                                    </Link>
-                                </td>
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
 
                 <!-- Empty State -->

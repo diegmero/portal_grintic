@@ -184,16 +184,18 @@ onUnmounted(() => {
         
         <div class="space-y-4 max-h-60 overflow-y-auto mb-4 bg-gray-50 p-3 rounded-lg">
             <div v-for="comment in comments" :key="comment.id" class="flex gap-3 group">
-                <div class="flex-shrink-0">
-                     <div class="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">
-                        {{ comment.user.name.charAt(0) }}
+                <div class="flex-shrink-0 mr-3">
+                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
+                         {{ comment.user?.name?.charAt(0) || '?' }}
                     </div>
                 </div>
                 <div class="flex-1 space-y-1">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-medium text-gray-900">{{ comment.user.name }}</h3>
+                        <h3 class="text-xs font-medium text-gray-900">
+                             {{ comment.user?.name || 'Usuario Eliminado' }}
+                        </h3>
                         <div class="flex items-center gap-2">
-                            <p class="text-[10px] text-gray-500">{{ new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</p>
+                             <p class="text-[10px] text-gray-500">{{ formatDate(comment.created_at) }}</p>
                             
                             <!-- Action buttons (always visible if authorized) -->
                             <div v-if="canEditComment(comment) && editingCommentId !== comment.id" class="flex items-center gap-1">

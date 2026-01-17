@@ -64,15 +64,16 @@ watch(filterForm, (val) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Finanzas</h2>
                     <p class="text-sm text-gray-500 mt-1">Gestión de facturación, cobros y saldos.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 self-start sm:self-auto">
                     <button @click="showCreateSlideOver = true" class="inline-flex items-center gap-2 rounded-md border border-transparent bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-800">
                         <PlusIcon class="h-5 w-5" />
-                        Nueva Factura
+                        <span class="hidden sm:inline">Nueva Factura</span>
+                        <span class="sm:hidden">Nueva</span>
                     </button>
                 </div>
             </div>
@@ -148,6 +149,7 @@ watch(filterForm, (val) => {
                 <!-- Main Content: Table -->
                 <div class="lg:col-span-4">
                     <div v-if="invoices.length > 0" class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -157,13 +159,15 @@ watch(filterForm, (val) => {
                                     <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estado</th>
                                     <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Total</th>
                                     <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Saldo</th>
-                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        <span class="">Acciones</span>
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
-                                <tr v-for="invoice in invoices" :key="invoice.id" class="hover:bg-gray-50 transition-colors">
+                                <tr 
+                                    v-for="invoice in invoices" 
+                                    :key="invoice.id" 
+                                    class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    @click="router.visit(route('invoices.show', invoice.id))"
+                                >
                                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand sm:pl-6">
                                         {{ invoice.number }}
                                     </td>
@@ -171,8 +175,24 @@ watch(filterForm, (val) => {
                                         {{ formatDate(invoice.date) }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                                        <div class="font-medium">{{ invoice.company?.name }}</div>
-                                        <div class="text-xs text-gray-500" v-if="invoice.project">{{ invoice.project.name }}</div>
+                                        <Link 
+                                            v-if="invoice.company" 
+                                            :href="route('clients.edit', invoice.company.id)" 
+                                            class="font-medium hover:text-brand hover:underline"
+                                            @click.stop
+                                        >
+                                            {{ invoice.company.name }}
+                                        </Link>
+                                        <div class="font-medium" v-else>{{ invoice.company?.name }}</div>
+
+                                        <Link 
+                                            v-if="invoice.project" 
+                                            :href="route('projects.show', invoice.project.id)" 
+                                            class="text-xs text-gray-500 hover:text-brand hover:underline block"
+                                            @click.stop
+                                        >
+                                            {{ invoice.project.name }}
+                                        </Link>
                                         <div class="text-xs text-gray-500 max-w-[200px] truncate" v-else-if="invoice.items?.length > 0">
                                             {{ invoice.items[0].description }} <span v-if="invoice.items.length > 1">(+{{ invoice.items.length - 1 }})</span>
                                         </div>
@@ -191,15 +211,10 @@ watch(filterForm, (val) => {
                                         </span>
                                         <div v-if="invoice.balance_due > 0 && new Date(invoice.due_date) < new Date()" class="text-[10px] text-red-500 font-bold uppercase mt-0.5">Vencida</div>
                                     </td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <Link :href="route('invoices.show', invoice.id)" class="inline-flex items-center gap-1 text-brand hover:text-brand/80 transition-colors">
-                                            <DocumentTextIcon class="h-4 w-4" />
-                                            <span>Ver</span>
-                                        </Link>
-                                    </td>
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
 
                     <!-- Empty State -->

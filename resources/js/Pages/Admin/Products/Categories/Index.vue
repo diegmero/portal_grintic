@@ -91,15 +91,18 @@ const deleteCategory = (category) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Categorías de Productos</h2>
                     <p class="text-sm text-gray-500 mt-1">Gestiona las categorías para organizar el catálogo.</p>
                 </div>
-                <PrimaryButton @click="openCreateModal" class="inline-flex items-center gap-2">
-                    <PlusIcon class="h-5 w-5" />
-                    Nueva Categoría
-                </PrimaryButton>
+                <div class="self-start sm:self-auto">
+                    <PrimaryButton @click="openCreateModal" class="inline-flex items-center gap-2">
+                        <PlusIcon class="h-5 w-5" />
+                        <span class="hidden sm:inline">Nueva Categoría</span>
+                        <span class="sm:hidden">Nueva</span>
+                    </PrimaryButton>
+                </div>
             </div>
         </template>
 

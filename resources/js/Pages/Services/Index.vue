@@ -126,19 +126,20 @@ const translateInvoiceStatus = (status) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h2 class="text-2xl font-bold leading-tight text-gray-900">Servicios de Clientes</h2>
                     <p class="text-sm text-gray-500 mt-1">Productos asignados a clientes con credenciales.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 self-end sm:self-auto">
                     <Link :href="route('products.index')" class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gray-700 shadow-sm transition duration-150 ease-in-out hover:bg-gray-50">
                         <CubeIcon class="h-5 w-5" />
-                        Ver Catálogo
+                        <span class="hidden sm:inline">Ver Catálogo</span>
                     </Link>
                     <PrimaryButton @click="openCreate" class="inline-flex items-center gap-2">
                         <PlusIcon class="h-5 w-5" />
-                        Asignar Servicio
+                        <span class="hidden sm:inline">Asignar Servicio</span>
+                        <span class="sm:hidden">Asignar</span>
                     </PrimaryButton>
                 </div>
             </div>
@@ -181,7 +182,8 @@ const translateInvoiceStatus = (status) => {
                 <!-- Main: Services Table -->
                 <div class="lg:col-span-4">
                     <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
@@ -194,9 +196,22 @@ const translateInvoiceStatus = (status) => {
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="service in services.data" :key="service.id" class="hover:bg-gray-50">
+                                <tr 
+                                    v-for="service in services.data" 
+                                    :key="service.id" 
+                                    class="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    @click="openDetail(service)"
+                                >
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">{{ service.company?.name }}</div>
+                                        <Link 
+                                            v-if="service.company"
+                                            :href="route('clients.edit', service.company.id)" 
+                                            class="font-medium text-gray-900 hover:text-brand hover:underline"
+                                            @click.stop
+                                        >
+                                            {{ service.company.name }}
+                                        </Link>
+                                        <div v-else class="font-medium text-gray-900">{{ service.company?.name }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
@@ -244,13 +259,13 @@ const translateInvoiceStatus = (status) => {
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <button @click="openDetail(service)" class="text-gray-400 hover:text-brand" title="Ver Detalles">
+                                            <button @click.stop="openDetail(service)" class="text-gray-400 hover:text-brand" title="Ver Detalles">
                                                 <EyeIcon class="h-5 w-5" />
                                             </button>
-                                            <button @click="openEdit(service)" class="text-gray-400 hover:text-brand" title="Editar">
+                                            <button @click.stop="openEdit(service)" class="text-gray-400 hover:text-brand" title="Editar">
                                                 <PencilSquareIcon class="h-5 w-5" />
                                             </button>
-                                            <button @click="deleteService(service)" class="text-gray-400 hover:text-red-500" title="Eliminar">
+                                            <button @click.stop="deleteService(service)" class="text-gray-400 hover:text-red-500" title="Eliminar">
                                                 <TrashIcon class="h-5 w-5" />
                                             </button>
                                         </div>
@@ -263,6 +278,7 @@ const translateInvoiceStatus = (status) => {
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>

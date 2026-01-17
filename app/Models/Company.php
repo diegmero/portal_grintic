@@ -17,6 +17,9 @@ class Company extends Model
         'country',
         'currency',
         'address',
+        'industry',
+        'business_type',
+        'status',
     ];
 
     public function users(): HasMany
@@ -36,5 +39,10 @@ class Company extends Model
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 }
