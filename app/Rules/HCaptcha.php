@@ -16,7 +16,7 @@ class HCaptcha implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $response = Http::asForm()->post('https://hcaptcha.com/siteverify', [
-            'secret' => env('HCAPTCHA_SECRET'),
+            'secret' => config('services.hcaptcha.secret'),
             'response' => $value,
         ]);
 

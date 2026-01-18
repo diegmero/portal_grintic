@@ -56,11 +56,9 @@ onMounted(() => {
                     sitekey: props.hCaptchaSiteKey,
                     callback: (token) => {
                         form['h-captcha-response'] = token;
-                        // Smooth auto-submit
+                        // Auto-submit immediately if fields are filled
                         if (form.email && form.password) {
-                             setTimeout(() => {
-                                 submit();
-                             }, 700);
+                            submit();
                         }
                     }
                 });
