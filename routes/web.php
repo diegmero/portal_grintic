@@ -102,6 +102,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{product}/request', [\App\Http\Controllers\ServiceRequestController::class, 'store'])->name('request');
     });
 
+    // Admin User Management
+    Route::resource('admins', \App\Http\Controllers\Admin\AdminUserController::class);
 });
 
 // Client Portal Routes (isolated from admin routes)

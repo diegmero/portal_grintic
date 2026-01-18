@@ -27,6 +27,7 @@ class User extends Authenticatable
         'password',
         'is_active',
         'is_primary_contact',
+        'last_login_at',
     ];
 
     public function company(): BelongsTo
@@ -56,6 +57,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_primary_contact' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 }

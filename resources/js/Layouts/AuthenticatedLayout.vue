@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon, ClipboardDocumentListIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -90,13 +90,23 @@ const isClient = computed(() => {
             title: 'FINANZAS',
             items: [
                 { 
-                    name: isClient.value ? 'Mis Finanzas' : 'Finanzas', 
+                    name: isClient.value ? 'Mis Finanzas' : 'Facturación', 
                     href: isClient.value ? route('portal.invoices') : route('invoices.index'), 
                     icon: CurrencyDollarIcon, 
                     current: isClient.value ? route().current('portal.invoices*') : route().current('invoices.*') 
                 }
             ]
         });
+
+        // 6. Sistema / Configuración (Admin Only)
+        if (!isClient.value) {
+            groups.push({
+                title: 'SISTEMA',
+                items: [
+                    { name: 'Administradores', href: route('admins.index'), icon: ShieldCheckIcon, current: route().current('admins.*') }
+                ]
+            });
+        }
 
         return groups;
     });
