@@ -13,7 +13,8 @@ import {
     FolderIcon,
     CalendarIcon,
     CreditCardIcon,
-    TrashIcon
+    TrashIcon,
+    EnvelopeIcon
 } from '@heroicons/vue/24/outline';
 import CustomSelect from '@/Components/CustomSelect.vue';
 
@@ -22,6 +23,7 @@ const props = defineProps({
 });
 
 const showPaymentModal = ref(false);
+const isSendingReminder = ref(false);
 
 const paymentForm = useForm({
     amount: '',
@@ -57,6 +59,17 @@ const printInvoice = () => {
 const deleteInvoice = () => {
     if (confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.')) {
         router.delete(route('invoices.destroy', props.invoice.id));
+    }
+};
+
+const sendReminder = () => {
+    if (confirm('¿Enviar recordatorio de pago al contacto principal del cliente?')) {
+        isSendingReminder.value = true;
+        router.post(route('invoices.send-reminder', props.invoice.id), {}, {
+            onFinish: () => {
+                isSendingReminder.value = false;
+            }
+        });
     }
 };
 
@@ -114,6 +127,11 @@ const statusConfig = {
                     <button v-if="invoice.status !== 'paid' && Number(invoice.balance_due) >= Number(invoice.total)" @click="deleteInvoice" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-red-600 uppercase tracking-widest hover:bg-red-50 focus:outline-none transition ease-in-out duration-150">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Eliminar
+                    </button>
+                    <button v-if="invoice.balance_due > 0" @click="sendReminder" :disabled="isSendingReminder" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none transition ease-in-out duration-150 disabled:opacity-50">
+                        <EnvelopeIcon class="w-4 h-4 mr-2" :class="{ 'animate-pulse': isSendingReminder }" />
+                        <span v-if="isSendingReminder">Enviando...</span>
+                        <span v-else>Recordatorio</span>
                     </button>
                     <button @click="printInvoice" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none transition ease-in-out duration-150">
                         <PrinterIcon class="w-4 h-4 mr-2" />

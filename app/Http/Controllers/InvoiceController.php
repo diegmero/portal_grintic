@@ -198,4 +198,33 @@ class InvoiceController extends Controller
         $invoice->delete();
         return redirect()->route('invoices.index')->with('success', 'Factura eliminada correctamente.');
     }
+
+    /**
+     * Send payment reminder email to the client's primary contact.
+     */
+    public function sendReminder(Invoice $invoice)
+    {
+        $invoice->load('company');
+        
+        // Find primary contact for this company
+        $primaryContact = $invoice->company->users()
+            ->where('is_primary_contact', true)
+            ->first();
+        
+        if (!$primaryContact) {
+            // Fallback to first user of the company
+            $primaryContact = $invoice->company->users()->first();
+        }
+        
+        if (!$primaryContact) {
+            return redirect()->back()->with('error', 'No se encontró un contacto para enviar el recordatorio.');
+        }
+        
+        // Send the email
+        \Illuminate\Support\Facades\Mail::to($primaryContact->email)
+            ->bcc(config('mail.from.address')) // Admin copy
+            ->send(new \App\Mail\InvoiceReminderMail($invoice, $primaryContact));
+        
+        return redirect()->back()->with('success', "Recordatorio enviado a {$primaryContact->email}");
+    }
 }
