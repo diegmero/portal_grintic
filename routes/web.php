@@ -28,15 +28,11 @@ Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'ind
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('clients', \App\Http\Controllers\ClientController::class)->only(['index', 'store', 'edit', 'update']);
-    Route::post('/clients/{client}/users', [\App\Http\Controllers\ClientController::class, 'storeUser'])->name('clients.users.store');
-    Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
-    Route::delete('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'destroyUser'])->name('clients.users.destroy');
-    Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    // SHARED RESOURCES (Accessible to both Admins and authorized Clients)
     Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
+    // Note: clientView might be legacy, leaving it accessible for now if used by old links, but prefer Portal.
     Route::get('/my-projects/{project}', [\App\Http\Controllers\ProjectController::class, 'clientView'])->name('projects.client-view');
     
     // Project Media
@@ -74,36 +70,41 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/additionals', [\App\Http\Controllers\ProjectAdditionalController::class, 'store'])->name('project-additionals.store');
     Route::delete('/project-additionals/{additional}', [\App\Http\Controllers\ProjectAdditionalController::class, 'destroy'])->name('project-additionals.destroy');
 
-    Route::get('/finance', [\App\Http\Controllers\InvoiceController::class, 'index'])->name('finance.index'); // Alias for consistent sidebar link if needed, or just redirect.
-    // Better: We corrected sidebar to use invoices.index. So we can remove finance.index logic or keep for legacy.
-    
-    Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
-    Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
-
-    // Products Catalog
-    // Products & Categories
-    Route::resource('product-categories', \App\Http\Controllers\Admin\ProductCategoryController::class)
-        ->except(['create', 'edit', 'show']);
-        
-    Route::resource('products', \App\Http\Controllers\ProductController::class);
-
-    // Notifications
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
 
-    // Client Services
-    Route::get('/clients/{client}/active-services', [\App\Http\Controllers\ClientServiceController::class, 'getActiveServices'])->name('clients.services.active');
-    Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
-    // Marketplace
+    // Marketplace (Accessible to Clients and Admins)
     Route::prefix('marketplace')->name('marketplace.')->group(function () {
         Route::get('/', [\App\Http\Controllers\MarketplaceController::class, 'index'])->name('index');
         Route::get('/{product:slug}', [\App\Http\Controllers\MarketplaceController::class, 'show'])->name('show');
         Route::post('/{product}/request', [\App\Http\Controllers\ServiceRequestController::class, 'store'])->name('request');
     });
 
-    // Admin User Management
-    Route::resource('admins', \App\Http\Controllers\Admin\AdminUserController::class);
+
+    // --- ADMIN ONLY RESOURCES ---
+    Route::middleware(['role:admin'])->group(function () {
+        Route::resource('clients', \App\Http\Controllers\ClientController::class)->only(['index', 'store', 'edit', 'update']);
+        Route::post('/clients/{client}/users', [\App\Http\Controllers\ClientController::class, 'storeUser'])->name('clients.users.store');
+        Route::put('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'updateUser'])->name('clients.users.update');
+        Route::delete('/clients/{client}/users/{user}', [\App\Http\Controllers\ClientController::class, 'destroyUser'])->name('clients.users.destroy');
+        
+        Route::resource('projects', \App\Http\Controllers\ProjectController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+        
+        Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
+        Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
+        
+        // Products Catalog
+        Route::resource('product-categories', \App\Http\Controllers\Admin\ProductCategoryController::class)->except(['create', 'edit', 'show']);
+        Route::resource('products', \App\Http\Controllers\ProductController::class);
+        
+        // Services Management
+        Route::get('/clients/{client}/active-services', [\App\Http\Controllers\ClientServiceController::class, 'getActiveServices'])->name('clients.services.active');
+        Route::resource('services', \App\Http\Controllers\ClientServiceController::class);
+        
+        // Admin User Management
+        Route::resource('admins', \App\Http\Controllers\Admin\AdminUserController::class);
+    });
 });
 
 // Client Portal Routes (isolated from admin routes)

@@ -18,8 +18,22 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\UpdateLastActivity::class,
         ]);
 
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
+        
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Illuminate\Http\Response $response) {
+             $status = $response->getStatusCode();
+             if (in_array($status, [403, 404, 500, 503])) {
+                 return \Inertia\Inertia::render('Error', ['status' => $status])
+                     ->toResponse(request())
+                     ->setStatusCode($status);
+             }
+             return $response;
+        });
     })->create();
