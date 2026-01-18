@@ -104,6 +104,7 @@ Route::middleware(['auth', 'twofactor'])->group(function () {
         
         Route::resource('invoices', \App\Http\Controllers\InvoiceController::class);
         Route::post('invoices/{invoice}/send-reminder', [\App\Http\Controllers\InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
+        Route::post('invoices/{invoice}/send-to-client', [\App\Http\Controllers\InvoiceController::class, 'sendToClient'])->name('invoices.send-to-client');
         Route::post('invoices/{invoice}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('invoices.payments.store');
         
         // Products Catalog

@@ -15,7 +15,8 @@ import {
     CreditCardIcon,
     TrashIcon,
     EnvelopeIcon,
-    PencilSquareIcon
+    PencilSquareIcon,
+    PaperAirplaneIcon
 } from '@heroicons/vue/24/outline';
 import CustomSelect from '@/Components/CustomSelect.vue';
 
@@ -25,6 +26,7 @@ const props = defineProps({
 
 const showPaymentModal = ref(false);
 const isSendingReminder = ref(false);
+const isSendingToClient = ref(false);
 
 const paymentForm = useForm({
     amount: '',
@@ -69,6 +71,17 @@ const sendReminder = () => {
         router.post(route('invoices.send-reminder', props.invoice.id), {}, {
             onFinish: () => {
                 isSendingReminder.value = false;
+            }
+        });
+    }
+};
+
+const sendToClient = () => {
+    if (confirm('¿Enviar esta factura al cliente? Se cambiará el estado a "Enviada" y se notificará por email.')) {
+        isSendingToClient.value = true;
+        router.post(route('invoices.send-to-client', props.invoice.id), {}, {
+            onFinish: () => {
+                isSendingToClient.value = false;
             }
         });
     }
@@ -129,6 +142,11 @@ const statusConfig = {
                         <PencilSquareIcon class="w-4 h-4 mr-2" />
                         Editar
                     </Link>
+                    <button v-if="invoice.status === 'draft'" @click="sendToClient" :disabled="isSendingToClient" class="inline-flex items-center px-4 py-2 bg-brand border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-600 focus:outline-none transition ease-in-out duration-150 disabled:opacity-50">
+                        <PaperAirplaneIcon class="w-4 h-4 mr-2" :class="{ 'animate-pulse': isSendingToClient }" />
+                        <span v-if="isSendingToClient">Enviando...</span>
+                        <span v-else>Enviar al Cliente</span>
+                    </button>
                     <button v-if="invoice.status !== 'paid' && Number(invoice.balance_due) >= Number(invoice.total)" @click="deleteInvoice" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-red-600 uppercase tracking-widest hover:bg-red-50 focus:outline-none transition ease-in-out duration-150">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Eliminar

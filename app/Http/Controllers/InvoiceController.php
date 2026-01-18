@@ -322,4 +322,45 @@ class InvoiceController extends Controller
         
         return redirect()->back()->with('success', "Recordatorio enviado a {$primaryContact->email}");
     }
+
+    /**
+     * Send invoice to client - changes status from draft to sent and emails the client.
+     */
+    public function sendToClient(Invoice $invoice)
+    {
+        // Only allow sending draft invoices
+        if ($invoice->status->value !== 'draft') {
+            return redirect()->back()->with('error', 'Solo se pueden enviar facturas en borrador.');
+        }
+
+        $invoice->load('company');
+        
+        // Find primary contact for this company
+        $primaryContact = $invoice->company->users()
+            ->where('is_primary_contact', true)
+            ->first();
+        
+        if (!$primaryContact) {
+            // Fallback to first active user of the company
+            $primaryContact = $invoice->company->users()
+                ->where('is_active', true)
+                ->first();
+        }
+        
+        if (!$primaryContact) {
+            return redirect()->back()->with('error', 'No se encontró un contacto para enviar la factura. Agregue un usuario al cliente primero.');
+        }
+        
+        // Update invoice status to 'sent'
+        $invoice->update([
+            'status' => \App\Enums\InvoiceStatus::Sent,
+        ]);
+        
+        // Send the email
+        \Illuminate\Support\Facades\Mail::to($primaryContact->email)
+            ->bcc(config('mail.from.address')) // Admin copy
+            ->send(new \App\Mail\InvoiceSentMail($invoice, $primaryContact));
+        
+        return redirect()->back()->with('success', "Factura enviada a {$primaryContact->email}");
+    }
 }

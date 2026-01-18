@@ -1,7 +1,7 @@
 @extends('emails.layouts.base')
 
 @section('preheader')
-Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format($invoice->balance_due, 2) }} {{ $invoice->currency }}
+Nueva factura {{ $invoice->number }} por ${{ number_format($invoice->total, 2) }} {{ $invoice->currency }}
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@ Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format
     </p>
     
     <p style="color: #4b5563; margin: 0 0 24px 0; font-size: 14px; line-height: 1.5;">
-        Le recordamos que tiene una factura pendiente de pago:
+        Le informamos que se ha generado una nueva factura a su nombre. A continuación encontrará los detalles:
     </p>
 
     {{-- Invoice Info Card --}}
@@ -24,30 +24,16 @@ Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format
                         <td style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #1f2937; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ $invoice->number }}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Cliente</td>
-                        <td style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #1f2937; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ $company->name }}</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Fecha de Emisión</td>
+                        <td style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #1f2937; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ \Carbon\Carbon::parse($invoice->date)->format('d M Y') }}</td>
                     </tr>
                     <tr>
                         <td style="padding: 6px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Vencimiento</td>
                         <td style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #1f2937; text-align: right; border-bottom: 1px solid #e5e7eb;">{{ \Carbon\Carbon::parse($invoice->due_date)->format('d M Y') }}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb;">Estado</td>
-                        <td style="padding: 6px 0; font-size: 13px; text-align: right; border-bottom: 1px solid #e5e7eb;">
-                            @if($urgencyLevel === 'overdue')
-                                <span style="display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background-color: #dc2626; color: #ffffff;">Vencida</span>
-                            @elseif($urgencyLevel === 'urgent')
-                                <span style="display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background-color: #fee2e2; color: #dc2626;">{{ $daysUntilDue }}d</span>
-                            @elseif($urgencyLevel === 'warning')
-                                <span style="display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background-color: #fef3c7; color: #d97706;">{{ $daysUntilDue }}d</span>
-                            @else
-                                <span style="display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background-color: #dbeafe; color: #1d4ed8;">{{ $daysUntilDue }}d</span>
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0 0 0; font-size: 14px; font-weight: 600; color: #1f2937;">Total Pendiente</td>
-                        <td style="padding: 10px 0 0 0; font-size: 18px; font-weight: 700; color: #1f2937; text-align: right;">${{ number_format($invoice->balance_due, 2) }}</td>
+                        <td style="padding: 10px 0 0 0; font-size: 14px; font-weight: 600; color: #1f2937;">Total a Pagar</td>
+                        <td style="padding: 10px 0 0 0; font-size: 18px; font-weight: 700; color: #1f2937; text-align: right;">${{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</td>
                     </tr>
                 </table>
             </td>
@@ -61,7 +47,7 @@ Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format
         @foreach($items as $index => $item)
         <tr>
             <td style="padding: 8px 10px; font-size: 12px; color: #374151; {{ $index < count($items) - 1 ? 'border-bottom: 1px solid #e5e7eb;' : '' }}">
-                {{ Str::limit($item->description, 40) }}
+                {{ Str::limit($item->description, 50) }}
             </td>
             <td style="padding: 8px 10px; font-size: 12px; font-weight: 600; color: #1f2937; text-align: right; white-space: nowrap; {{ $index < count($items) - 1 ? 'border-bottom: 1px solid #e5e7eb;' : '' }}">
                 ${{ number_format($item->total, 2) }}
@@ -76,7 +62,7 @@ Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format
         <tr>
             <td align="center" style="padding: 8px 0 24px 0;">
                 <a href="{{ $portalUrl }}" style="display: inline-block; background-color: #1f2937; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                    Ver Factura
+                    Ver Factura en el Portal
                 </a>
             </td>
         </tr>
@@ -84,6 +70,6 @@ Recordatorio: Factura {{ $invoice->number }} - Monto pendiente ${{ number_format
 
     {{-- Footer Note --}}
     <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0; line-height: 1.5;">
-        Si ya realizó el pago, ignore este mensaje.
+        Si tiene alguna pregunta sobre esta factura, no dude en contactarnos.
     </p>
 @endsection
