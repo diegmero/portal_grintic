@@ -42,38 +42,44 @@ const submit = () => {
 
 onMounted(() => {
     const renderCaptcha = () => {
-        if (window.hcaptcha) {
-            try {
-                const container = document.getElementById('hcaptcha-container');
-                if (container) {
-                     // Empty container to prevent duplicates
-                    container.innerHTML = '';
-                    window.hcaptcha.render(container, {
-                        sitekey: props.hCaptchaSiteKey,
-                        callback: (token) => {
-                            form['h-captcha-response'] = token;
-                        }
-                    });
-                }
-            } catch (e) {
-                console.error("hCaptcha render error", e);
+        // Double check prop presence
+        if (!props.hCaptchaSiteKey) {
+            console.error("hCaptcha Site Key is MISSING in props");
+            return;
+        }
+
+        if (typeof window.hcaptcha === 'undefined') {
+            return; // Will be called again by event listener
+        }
+
+        try {
+            const container = document.getElementById('hcaptcha-container');
+            if (container) {
+                if (container.childElementCount > 0) return; // Already rendered
+
+                container.innerHTML = '';
+                window.hcaptcha.render(container, {
+                    sitekey: props.hCaptchaSiteKey,
+                    callback: (token) => {
+                        form['h-captcha-response'] = token;
+                    }
+                });
+                console.log("hCaptcha renedered successfully");
             }
+        } catch (e) {
+            console.error("hCaptcha render error", e);
         }
     };
 
-    let checkInterval;
-
-    if (typeof window.hcaptcha !== 'undefined') {
+    if (window.hCaptchaReady) {
         renderCaptcha();
     } else {
-        // Fallback if script is slow to load
-        checkInterval = setInterval(() => {
-             if (typeof window.hcaptcha !== 'undefined') {
-                 clearInterval(checkInterval);
-                 renderCaptcha();
-             }
-        }, 100);
+        window.addEventListener('hcaptcha:loaded', renderCaptcha);
     }
+});
+
+onUnmounted(() => {
+     window.removeEventListener('hcaptcha:loaded', () => {});
 });
 
 onUnmounted(() => {
