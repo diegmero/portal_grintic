@@ -14,7 +14,8 @@ import {
     CalendarIcon,
     CreditCardIcon,
     TrashIcon,
-    EnvelopeIcon
+    EnvelopeIcon,
+    PencilSquareIcon
 } from '@heroicons/vue/24/outline';
 import CustomSelect from '@/Components/CustomSelect.vue';
 
@@ -124,6 +125,10 @@ const statusConfig = {
                 </div>
 
                 <div class="flex gap-2">
+                    <Link v-if="invoice.status === 'draft'" :href="route('invoices.edit', invoice.id)" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50 focus:outline-none transition ease-in-out duration-150">
+                        <PencilSquareIcon class="w-4 h-4 mr-2" />
+                        Editar
+                    </Link>
                     <button v-if="invoice.status !== 'paid' && Number(invoice.balance_due) >= Number(invoice.total)" @click="deleteInvoice" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-red-600 uppercase tracking-widest hover:bg-red-50 focus:outline-none transition ease-in-out duration-150">
                         <TrashIcon class="w-4 h-4 mr-2" />
                         Eliminar

@@ -200,6 +200,101 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Show form for editing a draft invoice.
+     */
+    public function edit(Invoice $invoice)
+    {
+        // Only allow editing draft invoices
+        if ($invoice->status->value !== 'draft') {
+            return redirect()->back()->with('error', 'Solo se pueden editar facturas en borrador.');
+        }
+
+        $invoice->load(['company', 'project', 'items']);
+
+        return Inertia::render('Finance/Invoices/Edit', [
+            'invoice' => $invoice,
+            'projects' => Project::select('id', 'name', 'company_id')->get(),
+            'companies' => Company::select('id', 'name', 'tax_id')->get(),
+        ]);
+    }
+
+    /**
+     * Update a draft invoice.
+     */
+    public function update(Request $request, Invoice $invoice)
+    {
+        // Only allow updating draft invoices
+        if ($invoice->status->value !== 'draft') {
+            return redirect()->back()->with('error', 'Solo se pueden editar facturas en borrador.');
+        }
+
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:date',
+            'items' => 'required|array|min:1',
+            'items.*.description' => 'required|string',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.client_service_id' => 'nullable|exists:client_services,id',
+        ]);
+
+        DB::transaction(function () use ($validated, $invoice) {
+            // Calculate new total
+            $total = 0;
+            foreach ($validated['items'] as $item) {
+                $total += $item['quantity'] * $item['price'];
+            }
+
+            // Validate budget if linked to project
+            if (!empty($validated['project_id'])) {
+                $project = Project::find($validated['project_id']);
+                if ($project && $project->price) {
+                    $alreadyBilled = $project->invoices()->where('id', '!=', $invoice->id)->sum('total');
+                    $newTotal = $alreadyBilled + $total;
+                    $additionalsSum = $project->additionals()->sum('amount');
+                    $totalBudget = $project->price + $additionalsSum;
+
+                    if ($newTotal > $totalBudget) {
+                        $remaining = $totalBudget - $alreadyBilled;
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'items' => ["El total acumulado ($" . number_format($newTotal, 2) . ") supera el presupuesto ($" . number_format($totalBudget, 2) . "). Disponible: $" . number_format($remaining, 2)]
+                        ]);
+                    }
+                }
+            }
+
+            // Update invoice
+            $invoice->update([
+                'company_id' => $validated['company_id'],
+                'project_id' => $validated['project_id'],
+                'date' => $validated['date'],
+                'due_date' => $validated['due_date'],
+                'total' => $total,
+                'balance_due' => $total, // Since it's draft, no payments yet
+            ]);
+
+            // Delete existing items and recreate
+            $invoice->items()->delete();
+            
+            foreach ($validated['items'] as $item) {
+                InvoiceItem::create([
+                    'id' => Str::uuid(),
+                    'invoice_id' => $invoice->id,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'total' => $item['quantity'] * $item['price'],
+                    'client_service_id' => $item['client_service_id'] ?? null,
+                ]);
+            }
+        });
+
+        return redirect()->route('invoices.show', $invoice)->with('success', 'Factura actualizada correctamente.');
+    }
+
+    /**
      * Send payment reminder email to the client's primary contact.
      */
     public function sendReminder(Invoice $invoice)
