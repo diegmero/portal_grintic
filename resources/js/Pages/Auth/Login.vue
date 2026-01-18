@@ -62,9 +62,12 @@ onMounted(() => {
                     sitekey: props.hCaptchaSiteKey,
                     callback: (token) => {
                         form['h-captcha-response'] = token;
+                        // Auto-submit if other fields are filled to speed up UX
+                        if (form.email && form.password) {
+                            submit();
+                        }
                     }
                 });
-                console.log("hCaptcha renedered successfully");
             }
         } catch (e) {
             console.error("hCaptcha render error", e);
