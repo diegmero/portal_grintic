@@ -17,7 +17,7 @@
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
-        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+        <script src="https://js.hcaptcha.com/1/api.js?render=explicit" async defer></script>
     </head>
     <body class="font-sans antialiased">
         @inertia
