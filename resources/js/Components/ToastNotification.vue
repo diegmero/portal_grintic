@@ -42,9 +42,9 @@ watch(() => page.props.flash, (flash) => {
         message.value = flash.error;
         type.value = 'error';
         show.value = true;
-        setTimeout(() => show.value = false, 5000);
+        setTimeout(() => show.value = false, 8000); // Longer duration for errors
     }
-}, { deep: true });
+}, { deep: true, immediate: true });
 </script>
 
 <template>
