@@ -26,5 +26,10 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Auth\Events\Login::class,
             \App\Listeners\UpdateLastLoginAt::class
         );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Lockout::class,
+            \App\Listeners\LogLockout::class
+        );
     }
 }

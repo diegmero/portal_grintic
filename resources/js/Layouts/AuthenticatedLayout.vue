@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon, ClipboardDocumentListIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon, HomeIcon, UsersIcon, FolderIcon, CurrencyDollarIcon, CubeIcon, TagIcon, ShoppingBagIcon, ClipboardDocumentListIcon, ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/24/outline';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 
 const showingNavigationDropdown = ref(false);
@@ -103,7 +103,8 @@ const isClient = computed(() => {
             groups.push({
                 title: 'SISTEMA',
                 items: [
-                    { name: 'Administradores', href: route('admins.index'), icon: ShieldCheckIcon, current: route().current('admins.*') }
+                    { name: 'Administradores', href: route('admins.index'), icon: ShieldCheckIcon, current: route().current('admins.*') },
+                    { name: 'Intentos Bloqueados', href: route('login-lockouts.index'), icon: ShieldExclamationIcon, current: route().current('login-lockouts.*') }
                 ]
             });
         }

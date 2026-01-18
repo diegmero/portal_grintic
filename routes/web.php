@@ -25,10 +25,21 @@ Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'ind
 
     // Finance Routes moved inside auth group
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'twofactor'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 2FA Management
+    Route::post('/user/two-factor-authentication', [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('two-factor.enable');
+    Route::post('/user/confirmed-two-factor-authentication', [\App\Http\Controllers\TwoFactorController::class, 'confirm'])->name('two-factor.confirm');
+    Route::delete('/user/two-factor-authentication', [\App\Http\Controllers\TwoFactorController::class, 'disable'])->name('two-factor.disable');
+    Route::get('/user/two-factor-qr-code', [\App\Http\Controllers\TwoFactorController::class, 'qrCode'])->name('two-factor.qr-code');
+    Route::get('/user/two-factor-recovery-codes', [\App\Http\Controllers\TwoFactorController::class, 'recoveryCodes'])->name('two-factor.recovery-codes');
+
+    // 2FA Challenge
+    Route::get('/two-factor-challenge', [\App\Http\Controllers\TwoFactorChallengeController::class, 'create'])->name('two-factor.login');
+    Route::post('/two-factor-challenge', [\App\Http\Controllers\TwoFactorChallengeController::class, 'store'])->name('two-factor.login.store');
 
     // SHARED RESOURCES (Accessible to both Admins and authorized Clients)
     Route::get('/projects/{project}/board', [\App\Http\Controllers\ProjectController::class, 'board'])->name('projects.board');
@@ -104,6 +115,9 @@ Route::middleware('auth')->group(function () {
         
         // Admin User Management
         Route::resource('admins', \App\Http\Controllers\Admin\AdminUserController::class);
+        
+        // System Security
+        Route::get('/login-lockouts', [\App\Http\Controllers\Admin\LoginLockoutController::class, 'index'])->name('login-lockouts.index');
     });
 });
 
