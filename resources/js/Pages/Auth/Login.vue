@@ -41,54 +41,20 @@ const submit = () => {
 };
 
 onMounted(() => {
-    const renderCaptcha = () => {
-        // Double check prop presence
-        if (!props.hCaptchaSiteKey) {
-            console.error("hCaptcha Site Key is MISSING in props");
-            return;
-        }
-
-        if (typeof window.hcaptcha === 'undefined') {
-            return; // Will be called again by event listener
-        }
-
-        try {
-            const container = document.getElementById('hcaptcha-container');
-            if (container) {
-                if (container.childElementCount > 0) return; // Already rendered
-
-                container.innerHTML = '';
-                window.hcaptcha.render(container, {
-                    sitekey: props.hCaptchaSiteKey,
-                    callback: (token) => {
-                        form['h-captcha-response'] = token;
-                        // Auto-submit if other fields are filled to speed up UX
-                        if (form.email && form.password) {
-                            submit();
-                        }
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("hCaptcha render error", e);
+    // Define global callback for hCaptcha
+    window.onCaptchaVerified = (token) => {
+        form['h-captcha-response'] = token;
+        
+        // Auto-submit instantly if fields are filled
+        if (form.email && form.password) {
+            submit();
         }
     };
-
-    if (window.hCaptchaReady) {
-        renderCaptcha();
-    } else {
-        window.addEventListener('hcaptcha:loaded', renderCaptcha);
-    }
 });
 
 onUnmounted(() => {
-     window.removeEventListener('hcaptcha:loaded', () => {});
-});
-
-onUnmounted(() => {
-     if (typeof checkInterval !== 'undefined') {
-         clearInterval(checkInterval);
-     }
+    // Cleanup global scope
+    delete window.onCaptchaVerified;
 });
 </script>
 
@@ -141,7 +107,11 @@ onUnmounted(() => {
 
             <!-- hCaptcha Widget -->
             <div class="mt-4 flex justify-center">
-                <div id="hcaptcha-container"></div>
+                <div 
+                    class="h-captcha" 
+                    :data-sitekey="hCaptchaSiteKey" 
+                    data-callback="onCaptchaVerified"
+                ></div>
             </div>
              <InputError class="mt-2 text-center" :message="form.errors['h-captcha-response']" />
 

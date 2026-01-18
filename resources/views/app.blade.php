@@ -17,14 +17,7 @@
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
-        <script>
-            window.hCaptchaReady = false;
-            function onHCaptchaLoad() {
-                window.hCaptchaReady = true;
-                window.dispatchEvent(new Event('hcaptcha:loaded'));
-            }
-        </script>
-        <script src="https://js.hcaptcha.com/1/api.js?onload=onHCaptchaLoad&render=explicit" async defer></script>
+        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
     </head>
     <body class="font-sans antialiased">
         @inertia
