@@ -137,8 +137,46 @@ class ClientController extends Controller
             abort(403, 'El usuario no pertenece a este cliente.');
         }
 
+        // Rule 1: Cannot delete if only contact (or only primary contact)
+        $activeContacts = $client->users()->whereNull('deleted_at')->count();
+        if ($activeContacts <= 1) {
+            return redirect()->back()->with('error', 'No puede eliminar el único contacto del cliente.');
+        }
+
+        // Rule 2: If primary contact, must assign another first
+        if ($user->is_primary_contact) {
+            return redirect()->back()->with('error', 'Este es el contacto principal. Asigne otro contacto como principal antes de eliminarlo.');
+        }
+
+        // Rule 3: Check for pending service requests
+        $pendingRequests = \App\Models\ServiceRequest::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'in_progress', 'approved'])
+            ->count();
+            
+        if ($pendingRequests > 0) {
+            return redirect()->back()->with('error', "Este usuario tiene {$pendingRequests} solicitud(es) pendiente(s). Complete o cancele las solicitudes primero.");
+        }
+
+        // All checks passed - Soft delete (preserves historical data)
         $user->delete();
 
-        return redirect()->back()->with('success', 'Usuario eliminado exitosamente.');
+        return redirect()->back()->with('success', 'Usuario eliminado. El historial de actividad se ha preservado.');
+    }
+
+    /**
+     * Get a summary of user dependencies for confirmation dialog.
+     */
+    public function getUserDependencies(Company $client, User $user)
+    {
+        if ($user->company_id !== $client->id) {
+            abort(403);
+        }
+
+        return response()->json([
+            'service_requests' => \App\Models\ServiceRequest::where('user_id', $user->id)->count(),
+            'comments' => \App\Models\Comment::where('user_id', $user->id)->count(),
+            'is_primary_contact' => $user->is_primary_contact,
+            'is_only_contact' => $client->users()->whereNull('deleted_at')->count() <= 1,
+        ]);
     }
 }
