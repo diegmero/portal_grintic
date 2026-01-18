@@ -118,6 +118,13 @@ Route::middleware(['auth', 'twofactor'])->group(function () {
         
         // System Security
         Route::get('/login-lockouts', [\App\Http\Controllers\Admin\LoginLockoutController::class, 'index'])->name('login-lockouts.index');
+        
+        // Backups
+        Route::get('/backups', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups', [\App\Http\Controllers\Admin\BackupController::class, 'store'])->name('backups.store');
+        Route::get('/backups/download', [\App\Http\Controllers\Admin\BackupController::class, 'download'])->name('backups.download');
+        Route::delete('/backups', [\App\Http\Controllers\Admin\BackupController::class, 'destroy'])->name('backups.destroy');
+        Route::post('/backups/cleanup', [\App\Http\Controllers\Admin\BackupController::class, 'cleanup'])->name('backups.cleanup');
     });
 });
 
