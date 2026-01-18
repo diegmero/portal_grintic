@@ -62,6 +62,9 @@ class InvoiceReminderMail extends Mailable implements ShouldQueue
      */
     public function content(): Content
     {
+        // Load items if not already loaded
+        $this->invoice->load('items');
+        
         return new Content(
             view: 'emails.invoice-reminder',
             with: [
@@ -70,6 +73,7 @@ class InvoiceReminderMail extends Mailable implements ShouldQueue
                 'daysUntilDue' => $this->daysUntilDue,
                 'urgencyLevel' => $this->urgencyLevel,
                 'company' => $this->invoice->company,
+                'items' => $this->invoice->items,
                 'portalUrl' => route('portal.invoices.show', $this->invoice->id),
             ],
         );
