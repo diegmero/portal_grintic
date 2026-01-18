@@ -78,6 +78,6 @@ const formatDate = (dateString) => {
                           For now, just noting it exists. Usually we use a Pagination component. -->
                 </div>
             </div>
-            </div>
         </div>
+    </AuthenticatedLayout>
 </template>
