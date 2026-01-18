@@ -147,17 +147,17 @@ const isClient = computed(() => {
                             <ul role="list" class="flex flex-1 flex-col gap-y-7">
                                 <li>
                                     <div v-for="(group, groupIdx) in navigation" :key="groupIdx" class="mb-6">
-                                        <div v-if="group.title" class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        <div v-if="group.title" class="px-3 mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                                             {{ group.title }}
                                         </div>
-                                        <ul role="list" class="space-y-1">
+                                        <ul role="list" class="space-y-0.5">
                                             <li v-for="item in group.items" :key="item.name">
                                                 <Link 
                                                     :href="item.href" 
-                                                    :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']"
+                                                    :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-2.5 rounded-lg py-2 px-3 text-sm font-medium leading-5 transition-colors']"
                                                     @click="showingNavigationDropdown = false"
                                                 >
-                                                    <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                                                    <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
                                                     {{ item.name }}
                                                 </Link>
                                             </li>
@@ -190,15 +190,15 @@ const isClient = computed(() => {
                 </Link>
             </div>
             
-            <nav class="flex flex-1 flex-col px-4 py-6 overflow-y-auto">
-                <div v-for="(group, groupIdx) in navigation" :key="groupIdx" class="mb-6">
-                    <div v-if="group.title" class="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <nav class="flex flex-1 flex-col px-3 py-4 overflow-y-auto">
+                <div v-for="(group, groupIdx) in navigation" :key="groupIdx" class="mb-4">
+                    <div v-if="group.title" class="px-3 mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                         {{ group.title }}
                     </div>
-                    <ul role="list" class="space-y-1">
+                    <ul role="list" class="space-y-0.5">
                         <li v-for="item in group.items" :key="item.name">
-                            <Link :href="item.href" :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors']">
-                                <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                            <Link :href="item.href" :class="[item.current ? 'bg-brand text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', 'group flex gap-x-2.5 rounded-lg py-2 px-3 text-sm font-medium leading-5 transition-colors']">
+                                <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
                                 {{ item.name }}
                             </Link>
                         </li>
@@ -206,14 +206,14 @@ const isClient = computed(() => {
                 </div>
             </nav>
 
-            <div class="p-4 border-t border-white/10 mt-auto">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-full bg-brand flex items-center justify-center text-white font-bold">
+            <div class="p-3 border-t border-white/10 mt-auto">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-8 w-8 rounded-full bg-brand flex items-center justify-center text-white font-bold text-sm">
                         {{ $page.props.auth.user.name.charAt(0) }}
                     </div>
                     <div class="flex flex-col">
-                         <span class="text-sm font-medium text-white">{{ $page.props.auth.user.name }}</span>
-                         <span class="text-xs text-gray-400 capitalize">{{ $page.props.auth.user.roles[0]?.name || 'User' }}</span>
+                         <span class="text-sm font-medium text-white leading-tight">{{ $page.props.auth.user.name }}</span>
+                         <span class="text-[11px] text-gray-400 capitalize">{{ $page.props.auth.user.roles[0]?.name || 'User' }}</span>
                     </div>
                 </div>
             </div>
