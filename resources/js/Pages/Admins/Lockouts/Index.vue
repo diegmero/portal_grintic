@@ -30,7 +30,7 @@ const formatDate = (dateString) => {
             </div>
         </template>
 
-        <div class="max-w-7xl mx-auto">
+        <div class="py-0">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl ring-1 ring-gray-900/5">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -78,6 +78,6 @@ const formatDate = (dateString) => {
                           For now, just noting it exists. Usually we use a Pagination component. -->
                 </div>
             </div>
+            </div>
         </div>
-    </AuthenticatedLayout>
 </template>
